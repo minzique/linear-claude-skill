@@ -71,13 +71,13 @@ Always set BOTH when creating projects.
 
 ### Project Status UUIDs
 
+Status UUIDs are **workspace-specific**. Query your workspace:
+
+```graphql
+query { projectStatuses { nodes { id name } } }
 ```
-Backlog:     1ed7da89-db44-4339-b0d7-ce37d8ff9604
-Planned:     33ebbb84-53ea-4dd8-a8db-49a8b3b9c502
-In Progress: 71d18c8f-53de-4752-be37-a6d529cb9c97
-Completed:   54294a72-010d-4ae7-9829-bed76232fb66
-Canceled:    562050cc-bb71-4b81-bf3d-8bed7cc44153
-```
+
+Common statuses: `Backlog`, `Planned`, `In Progress`, `Completed`, `Canceled`
 
 ### Resource Links
 
@@ -136,4 +136,4 @@ MIT License — See [LICENSE](LICENSE)
 
 ## Credits
 
-Created for the Claude Code community. Patterns developed through real-world usage managing the [021 School Platform](https://github.com/wrsmith108/021-school-platform) project.
+Created for the Claude Code community. Patterns developed through real-world project management workflows.
