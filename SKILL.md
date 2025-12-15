@@ -455,6 +455,90 @@ updateProjectStatus();
 "
 ```
 
+### Project Updates (Status Reports)
+
+Post status updates to a project's Updates tab. These are visible at `/project/{slug}/updates`.
+
+#### Create Project Update
+
+```graphql
+mutation {
+  projectUpdateCreate(input: {
+    projectId: "<project-uuid>",
+    body: "## Status Update\n\nMarkdown content here...",
+    health: onTrack
+  }) {
+    success
+    projectUpdate {
+      id
+      url
+      createdAt
+    }
+  }
+}
+```
+
+**Health Options:**
+- `onTrack` - 🟢 Project proceeding as planned
+- `atRisk` - 🟡 Issues that may cause delays
+- `offTrack` - 🔴 Project is behind schedule
+
+#### Example: Post Progress Update
+
+```javascript
+node -e "
+const projectId = '<project-uuid>';
+
+const updateBody = \`## Status: In Progress 🚀
+
+**Swarm execution started** — agents actively implementing features.
+
+### Progress
+- **32% complete** (9/28 issues done)
+- Project status updated to **In Progress**
+
+### Completed
+- ✅ Foundation setup
+- ✅ Core configuration
+
+### In Progress
+- 🔄 Main feature implementation
+- 🔄 UI components
+
+### Up Next
+- Testing suite
+- Documentation
+\`;
+
+const mutation = \`mutation {
+  projectUpdateCreate(input: {
+    projectId: \\\"\${projectId}\\\",
+    body: \${JSON.stringify(updateBody)},
+    health: onTrack
+  }) {
+    success
+    projectUpdate { id }
+  }
+}\`;
+
+fetch('https://api.linear.app/graphql', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', 'Authorization': process.env.LINEAR_API_KEY },
+  body: JSON.stringify({ query: mutation })
+}).then(r => r.json()).then(d => console.log(JSON.stringify(d, null, 2)));
+"
+```
+
+#### When to Post Updates
+
+| Trigger | Health | Content |
+|---------|--------|---------|
+| Work starts (swarm launched) | `onTrack` | Progress %, what's in progress |
+| Milestone reached | `onTrack` | Completed items, next steps |
+| Blockers encountered | `atRisk` | Issue description, mitigation plan |
+| Deadline at risk | `offTrack` | Root cause, revised timeline |
+| Phase complete | `onTrack` | Summary, metrics, lessons learned |
+
 ---
 
 ## Reference
