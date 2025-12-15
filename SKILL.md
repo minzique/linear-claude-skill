@@ -19,6 +19,20 @@ Choose the right tool for the task:
 2. **SDK scripts** - Use for complex operations (loops, bulk updates, conditional logic, data transformations)
 3. **GraphQL API** - Fallback for operations not supported by MCP or SDK
 
+### MCP Reliability Matrix
+
+**IMPORTANT**: The Linear MCP server has known reliability issues. Use this matrix:
+
+| Operation | MCP Tool | Reliability | Recommended |
+|-----------|----------|-------------|-------------|
+| Create issue | `linear_create_issue` | ✅ High | MCP |
+| Search issues | `linear_search_issues` | ⚠️ Times out | GraphQL |
+| Get user issues | `linear_get_user_issues` | ⚠️ May timeout | GraphQL |
+| Update issue status | `linear_update_issue` | ⚠️ Unreliable | GraphQL |
+| Add comment | `linear_add_comment` | ❌ Fails with UUIDs | GraphQL |
+
+**Pattern**: Use MCP for issue creation, but fall back to direct GraphQL for searches, status updates, and comments.
+
 ## Conventions
 
 ### Issue Status
@@ -83,6 +97,95 @@ Scripts provide full type hints and are easier to debug than raw GraphQL for mul
 ## GraphQL API
 
 **Fallback only.** Use when operations aren't supported by MCP or SDK. See `api.md` for documentation on using the Linear GraphQL API directly.
+
+### MCP Timeout Workarounds
+
+When MCP times out or fails, use these direct GraphQL patterns:
+
+#### Search Issues (when MCP times out)
+
+```javascript
+// Inline GraphQL via node --experimental-fetch
+node --experimental-fetch -e "
+async function searchIssues() {
+  const query = \`
+    query {
+      issues(filter: {
+        team: { key: { eq: \"TEAM\" } }
+        state: { type: { nin: [\"completed\", \"canceled\"] } }
+      }, first: 25) {
+        nodes {
+          id identifier title state { name } priority
+        }
+      }
+    }
+  \`;
+
+  const res = await fetch('https://api.linear.app/graphql', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': process.env.LINEAR_API_KEY
+    },
+    body: JSON.stringify({ query })
+  });
+
+  const data = await res.json();
+  data.data.issues.nodes.forEach(i => {
+    console.log(\`\${i.identifier}: \${i.title} [\${i.state.name}]\`);
+  });
+}
+searchIssues();
+"
+```
+
+#### Update Issue Status (when MCP is unreliable)
+
+```javascript
+// First get the workflow state ID for "Done"
+const stateQuery = \`
+  query {
+    workflowStates(filter: { team: { key: { eq: \"TEAM\" } }, name: { eq: \"Done\" } }) {
+      nodes { id name }
+    }
+  }
+\`;
+
+// Then update the issue
+const mutation = \`
+  mutation {
+    issueUpdate(id: "\${issueUuid}", input: { stateId: "\${doneStateId}" }) {
+      success
+      issue { identifier state { name } }
+    }
+  }
+\`;
+```
+
+#### Add Comment (MCP fails with UUIDs)
+
+```javascript
+// Get issue UUID from identifier
+const issueQuery = \`
+  query {
+    issues(filter: { number: { in: [123, 124, 125] } }) {
+      nodes { id identifier }
+    }
+  }
+\`;
+
+// Add comment using UUID
+const mutation = \`
+  mutation {
+    commentCreate(input: {
+      issueId: "\${issueUuid}",
+      body: "Implementation complete. See PR #42."
+    }) { success }
+  }
+\`;
+```
+
+**Pro Tip**: Store frequently-used IDs (team UUID, common state UUIDs) in your project's CLAUDE.md to avoid repeated lookups.
 
 ### Ad-Hoc Queries
 

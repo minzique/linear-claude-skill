@@ -9,6 +9,7 @@ A comprehensive Claude Code skill for managing Linear issues, projects, and team
 - **GraphQL API** — Direct API access for advanced queries
 - **Project Management** — Content, descriptions, milestones, resource links
 - **Status Management** — Project status UUIDs for workflow automation
+- **MCP Reliability Workarounds** — Fallback patterns for timeout/failure scenarios
 
 ## Installation
 
@@ -57,6 +58,19 @@ linear/
 ```
 
 ## Key Patterns
+
+### MCP Reliability (Critical!)
+
+The Linear MCP server has known reliability issues:
+
+| Operation | MCP Reliability | Recommendation |
+|-----------|----------------|----------------|
+| Create issue | ✅ Reliable | Use MCP |
+| Search issues | ⚠️ Times out | Use GraphQL |
+| Update status | ⚠️ Unreliable | Use GraphQL |
+| Add comment | ❌ Broken | Use GraphQL |
+
+See `SKILL.md` for GraphQL workaround patterns.
 
 ### Content vs Description (Critical!)
 
