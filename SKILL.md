@@ -220,12 +220,42 @@ mutation {
 }
 ```
 
+### Discovery Before Creation (MANDATORY)
+
+**ALWAYS check Linear before creating ANY project or issue.** Skipping this step causes duplicate projects and wasted effort.
+
+```bash
+# Check for existing projects
+linear projects list | grep -i "phase\|<feature-name>"
+
+# Check for existing issues (MCP may timeout - use CLI as fallback)
+linear issues list --filter "title:Phase N"
+# Or: mcp__linear__linear_search_issues with query="Phase N feature"
+```
+
+**Checklist before ANY create operation:**
+
+| Check | Command | Action if Found |
+|-------|---------|-----------------|
+| Project exists? | `linear projects list \| grep -i "name"` | Use existing UUID, skip creation |
+| Issues exist? | `linear issues list --filter "title:keyword"` | Review existing, update if needed |
+| Initiative linked? | Check project in Linear UI | Skip link-project step |
+
+**NEVER skip discovery. Duplicate projects waste time and create confusion.**
+
+---
+
 ### New Phase Project Pattern
+
+**Step 0: Run Discovery Checks (see above)**
 
 When creating a new phase, follow this complete workflow:
 
 ```bash
-# 1. Create project via CLI
+# 0. DISCOVERY - Check for existing project/issues first!
+linear projects list | grep -i "phase N"
+
+# 1. Create project via CLI (ONLY if Step 0 found nothing)
 linear projects create --name "Phase N: Name" --description "Short summary"
 
 # 2. Link to initiative
@@ -240,7 +270,7 @@ node scripts/linear-helpers.mjs link-project <project-id>
 # 5. Create milestone for Definition of Done
 # Use projectMilestoneCreate mutation
 
-# 6. Create issues via MCP
+# 6. Create issues via MCP (check for existing first!)
 # 7. Add issues to project
 ```
 

@@ -4,6 +4,7 @@ A comprehensive Claude Code skill for managing Linear issues, projects, and team
 
 ## Features
 
+- **Discovery Before Creation** — Mandatory checks to prevent duplicate projects/issues
 - **MCP Tool Integration** — Simple operations via Linear MCP server
 - **SDK Automation** — Complex operations with TypeScript scripts
 - **GraphQL API** — Direct API access for advanced queries
@@ -58,6 +59,20 @@ linear/
 ```
 
 ## Key Patterns
+
+### Discovery Before Creation (Critical!)
+
+**ALWAYS check Linear before creating projects or issues.** This prevents duplicates:
+
+```bash
+# Check for existing projects
+linear projects list | grep -i "phase\|feature-name"
+
+# Check for existing issues
+linear issues list --filter "title:keyword"
+```
+
+See `SKILL.md` → "Discovery Before Creation" for the full checklist.
 
 ### MCP Reliability (Critical!)
 
