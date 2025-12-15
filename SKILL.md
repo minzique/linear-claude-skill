@@ -313,31 +313,149 @@ mutation {
 - `DoD: Security` - Security requirements verified
 - `DoD: Accessibility` - A11y requirements met
 
-### Project Status UUIDs
+### Project Status (IMPORTANT)
 
-Projects have status independent of issue progress. Status UUIDs are **workspace-specific** - query your workspace to find them:
+**Project status is NOT auto-updated when issues move.** You must explicitly update project status.
+
+#### Project Status vs Issue Status
+
+| Concept | Applies To | Field | Auto-Updates? |
+|---------|------------|-------|---------------|
+| **Issue Status** | Individual issues | `stateId` | Yes (via workflow) |
+| **Project Status** | Entire project | `statusId` | ❌ No - manual only |
+
+#### Status Types and UUIDs
+
+Query your workspace's status UUIDs (workspace-specific):
 
 ```graphql
-# Get your workspace's project status UUIDs
+query { projectStatuses { nodes { id name type } } }
+```
+
+**Standard Status Types:**
+
+| Status | Type | When to Use |
+|--------|------|-------------|
+| `Backlog` | `backlog` | Project created but not started |
+| `Planned` | `planned` | Project scheduled, issues created |
+| `In Progress` | `started` | **Issues actively being worked** |
+| `Completed` | `completed` | All issues done |
+| `Canceled` | `canceled` | Project abandoned |
+
+#### When to Update Project Status
+
+Update project status at these transition points:
+
+| Trigger | New Status | Check |
+|---------|------------|-------|
+| First issue moves to "In Progress" | `In Progress` | Any issue has `started` state |
+| All issues complete | `Completed` | No issues in backlog/progress |
+| Work begins on phase | `In Progress` | Manual or first issue started |
+| Phase fully implemented | `Completed` | All tests pass, PR merged |
+
+#### Update Project Status
+
+```graphql
+mutation {
+  projectUpdate(id: "<project-uuid>", input: {
+    statusId: "<status-uuid>"
+  }) {
+    success
+    project { name status { name } }
+  }
+}
+```
+
+#### Check Project Issue Progress
+
+Before updating status, check issue states:
+
+```graphql
 query {
-  projectStatuses {
-    nodes {
-      id
-      name
-      type
+  project(id: "<project-uuid>") {
+    name
+    status { name }
+    issues {
+      nodes {
+        identifier
+        state { name type }
+      }
     }
   }
 }
 ```
 
-Common status names: `Backlog`, `Planned`, `In Progress`, `Completed`, `Canceled`
+**Logic for auto-determining status:**
+- If ANY issue has `state.type = "started"` → Project is `In Progress`
+- If ALL issues have `state.type = "completed"` → Project is `Completed`
+- If NO issues started → Project is `Planned` or `Backlog`
 
-```graphql
-# Update project status
-mutation {
-  projectUpdate(id: "<project-uuid>", input: { statusId: "<status-uuid>" }) { success }
+#### Helper: Update Project Status Script
+
+```javascript
+// Check project issues and update status accordingly
+node -e "
+const PROJECT_ID = '<project-uuid>';
+
+// Status UUIDs (query your workspace for these)
+const STATUS = {
+  backlog: '1ed7da89-db44-4339-b0d7-ce37d8ff9604',
+  planned: '33ebbb84-53ea-4dd8-a8db-49a8b3b9c502',
+  inProgress: '71d18c8f-53de-4752-be37-a6d529cb9c97',
+  completed: '54294a72-010d-4ae7-9829-bed76232fb66'
+};
+
+async function updateProjectStatus() {
+  // Get project issues
+  const issueQuery = \`query {
+    project(id: \"${PROJECT_ID}\") {
+      name
+      issues { nodes { state { type } } }
+    }
+  }\`;
+
+  const res = await fetch('https://api.linear.app/graphql', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': process.env.LINEAR_API_KEY },
+    body: JSON.stringify({ query: issueQuery })
+  });
+  const { data } = await res.json();
+
+  const issues = data.project.issues.nodes;
+  const states = issues.map(i => i.state.type);
+
+  // Determine appropriate status
+  let newStatus;
+  if (states.every(s => s === 'completed')) {
+    newStatus = STATUS.completed;
+  } else if (states.some(s => s === 'started')) {
+    newStatus = STATUS.inProgress;
+  } else {
+    newStatus = STATUS.planned;
+  }
+
+  // Update project
+  const mutation = \`mutation {
+    projectUpdate(id: \"${PROJECT_ID}\", input: { statusId: \"${newStatus}\" }) {
+      success
+      project { name status { name } }
+    }
+  }\`;
+
+  const updateRes = await fetch('https://api.linear.app/graphql', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': process.env.LINEAR_API_KEY },
+    body: JSON.stringify({ query: mutation })
+  });
+  const result = await updateRes.json();
+  console.log('Updated:', result.data.projectUpdate.project);
 }
+
+updateProjectStatus();
+"
 ```
+
+---
 
 ## Reference
 
