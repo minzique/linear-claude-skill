@@ -81,7 +81,7 @@ See `skills/linear/SKILL.md` → "Discovery Before Creation" for the full checkl
 
 ### MCP Reliability (Critical!)
 
-The Linear MCP server has known reliability issues:
+The Linear MCP server has known reliability issues (34% timeout rate due to SSE idle timeouts):
 
 | Operation | MCP Reliability | Recommendation |
 |-----------|----------------|----------------|
@@ -90,7 +90,7 @@ The Linear MCP server has known reliability issues:
 | Update status | ⚠️ Unreliable | Use GraphQL |
 | Add comment | ❌ Broken | Use GraphQL |
 
-See `skills/linear/SKILL.md` for GraphQL workaround patterns.
+See `skills/linear/SKILL.md` for GraphQL workaround patterns and root cause explanation.
 
 ### Content vs Description (Critical!)
 

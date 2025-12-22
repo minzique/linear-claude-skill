@@ -33,6 +33,23 @@ Choose the right tool for the task:
 
 **Pattern**: Use MCP for issue creation, but fall back to direct GraphQL for searches, status updates, and comments.
 
+### Why MCP Fails (Root Cause)
+
+The 34% timeout rate has a specific technical cause:
+
+**SSE Connection Drops**: MCP uses Server-Sent Events (SSE) for communication. Most HTTP servers and proxies close an SSE response that stays silent for several minutes. Because Linear's MCP endpoint sends **no keep-alive heartbeat** while idle, the connection hits this "body timeout" and terminates.
+
+Linear acknowledges this in their docs:
+> "Remote MCP connections are still early and we've found that the connection may fail or require multiple attempts."
+
+**Implications**:
+- Operations taking >30 seconds often timeout
+- Idle connections drop after ~5 minutes
+- Search operations with large result sets are particularly vulnerable
+- Comments fail because UUID resolution adds latency
+
+**Mitigation**: The reliability routing matrix above encodes these learnings—use MCP only for fast, reliable operations (issue creation), and GraphQL for everything else.
+
 ## Conventions
 
 ### Issue Status
@@ -97,6 +114,68 @@ Scripts provide full type hints and are easier to debug than raw GraphQL for mul
 ## GraphQL API
 
 **Fallback only.** Use when operations aren't supported by MCP or SDK. See `api.md` for documentation on using the Linear GraphQL API directly.
+
+### Timeout Handling Patterns
+
+When operations take longer than expected, use these patterns to maintain reliability:
+
+**1. Progress Notifications**
+For bulk operations, notify the user of progress:
+
+```javascript
+const issues = ['SMI-432', 'SMI-433', 'SMI-434'];
+for (let i = 0; i < issues.length; i++) {
+  console.log(`Processing ${i + 1}/${issues.length}: ${issues[i]}`);
+  // ... operation
+}
+```
+
+**2. Chunked Batch Operations**
+Break large batches into smaller chunks to avoid timeouts:
+
+```javascript
+const BATCH_SIZE = 10;
+const DELAY_MS = 150; // Avoid rate limiting
+
+for (let i = 0; i < issues.length; i += BATCH_SIZE) {
+  const batch = issues.slice(i, i + BATCH_SIZE);
+  console.log(`Batch ${Math.floor(i / BATCH_SIZE) + 1}: Processing ${batch.length} issues`);
+
+  for (const issue of batch) {
+    await processIssue(issue);
+    await new Promise(r => setTimeout(r, DELAY_MS));
+  }
+}
+```
+
+**3. Fallback on Timeout**
+Detect timeouts and fall back to GraphQL:
+
+```javascript
+try {
+  // Try MCP first (faster when it works)
+  await mcp__linear__linear_search_issues({ query: "keyword" });
+} catch (error) {
+  if (error.message.includes('timeout') || error.message.includes('ETIMEDOUT')) {
+    console.log('MCP timed out, falling back to GraphQL...');
+    // Use GraphQL workaround (see below)
+  }
+}
+```
+
+**4. Bulk Sync Script**
+Use `scripts/sync.ts` for reliable bulk state updates:
+
+```bash
+# Update multiple issues to Done state
+LINEAR_API_KEY=lin_api_xxx npx tsx scripts/sync.ts --issues SMI-432,SMI-433,SMI-434 --state Done
+
+# Preview changes without applying
+LINEAR_API_KEY=lin_api_xxx npx tsx scripts/sync.ts --issues SMI-432,SMI-433 --state Done --dry-run
+
+# Add comment with state change
+LINEAR_API_KEY=lin_api_xxx npx tsx scripts/sync.ts --issues SMI-432 --state Done --comment "Completed in PR #42"
+```
 
 ### MCP Timeout Workarounds
 
