@@ -79,6 +79,22 @@ linear issues list --filter "title:keyword"
 
 See `skills/linear/SKILL.md` → "Discovery Before Creation" for the full checklist.
 
+### Codebase Verification Before Work (Critical!)
+
+**ALWAYS verify codebase state before accepting issue scope at face value.**
+
+Issue descriptions may be outdated or speculative. APIs or features may already be implemented!
+
+```bash
+# Before starting "implement API" issues:
+ls src/pages/api/admin/members/     # Check if files exist
+grep -r "test.skip" tests/          # Check if tests are just skipped
+```
+
+**Key Lesson**: Issues describing "missing" features may already be implemented. The real work is often un-skipping tests and fixing assertions, not reimplementing.
+
+See `skills/linear/SKILL.md` → "Codebase Verification Before Work" for the full checklist.
+
 ### MCP Reliability (Critical!)
 
 The Linear MCP server has known reliability issues (34% timeout rate due to SSE idle timeouts):

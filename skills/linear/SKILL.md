@@ -461,6 +461,79 @@ linear issues list --filter "title:Phase N"
 
 ---
 
+### Codebase Verification Before Work (MANDATORY)
+
+**ALWAYS verify codebase state before accepting Linear issue scope at face value.**
+
+Issue descriptions may be **outdated** or **speculative** — written before code exploration. This is especially common when:
+- Issues were created during planning, not after code review
+- The codebase evolved since the issue was created
+- API endpoints or features were implemented but not documented in Linear
+
+**Key Lesson**: Issues describing "missing" APIs or features may already be implemented.
+
+```bash
+# Before starting any API/feature implementation issue:
+
+# 1. Search for existing implementations
+grep -r "apiEndpoint\|functionName" src/
+
+# 2. Check if files already exist
+ls src/pages/api/admin/members/  # If issue says "implement members API"
+
+# 3. Read existing code
+cat src/pages/api/admin/members/index.ts  # May already be complete!
+
+# 4. Run tests to see what's actually failing
+npx playwright test tests/e2e/journeys/admin/
+```
+
+**Checklist before accepting issue scope:**
+
+| Check | Method | If Found |
+|-------|--------|----------|
+| API exists? | `ls src/pages/api/**/*.ts` | Update issue scope to "verify/test" |
+| Feature implemented? | `grep -r "featureName" src/` | Mark implementation subtasks as done |
+| Tests passing? | Run test suite | Focus on fixing failures, not reimplementing |
+| Only tests skipped? | Check for `test.skip` | Real work is un-skipping + fixing assertions |
+
+**Example: Scope Discovery**
+
+Issue says: "Implement /api/admin/members CRUD endpoints"
+
+**BEFORE starting:**
+```bash
+# Check if files exist
+ls src/pages/api/admin/members/
+# Output: index.ts  [id].ts  ← Files exist!
+
+# Read the implementation
+cat src/pages/api/admin/members/index.ts | head -50
+# Output: Full implementation with GET, POST, auth checks
+
+# Check why tests fail
+grep -r "test.describe.skip" tests/e2e/journeys/admin/
+# Output: member-management.spec.ts uses test.describe.skip
+```
+
+**CORRECTED scope**: "Un-skip E2E tests and fix any assertion failures" (not "implement API")
+
+**Update Linear immediately when scope changes:**
+```bash
+node scripts/linear-helpers.mjs add-comment 531 "## Scope Update
+
+**Discovery:** API endpoints are ALREADY COMPLETE!
+
+### Actual Remaining Work
+1. Un-skip journey tests
+2. Fix any test assertion failures
+3. Verify tests pass"
+```
+
+**NEVER assume issue descriptions are accurate. Verify codebase state first.**
+
+---
+
 ### New Phase Project Pattern
 
 **Step 0: Run Discovery Checks (see above)**

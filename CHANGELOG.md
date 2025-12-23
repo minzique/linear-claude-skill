@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-12-23
+
+### Added
+- **Codebase Verification Before Work** - MANDATORY pattern for verifying codebase state before accepting Linear issue scope
+  - Checklist for checking if APIs/features already exist
+  - Pattern for detecting skipped tests vs missing implementations
+  - Example workflow showing scope discovery
+  - Guidance on updating Linear when scope changes
+- This pattern prevents wasted effort reimplementing already-complete features
+
+### Lesson Learned
+Issues describing "missing" APIs or features may already be implemented. Always verify codebase state before starting work.
+
+---
+
 ## [1.1.0] - 2025-12-21
 
 ### Added
