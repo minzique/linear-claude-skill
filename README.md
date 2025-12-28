@@ -4,6 +4,8 @@ A comprehensive [Claude Code](https://claude.ai/code) skill for managing Linear 
 
 ## Features
 
+- **First-Time Setup Check** — Automatic configuration validation with actionable guidance
+- **High-Level Operations** — Simple commands for initiatives, projects, and status updates
 - **Discovery Before Creation** — Mandatory checks to prevent duplicate projects/issues
 - **MCP Tool Integration** — Simple operations via Linear MCP server
 - **SDK Automation** — Complex operations with TypeScript scripts
@@ -12,6 +14,66 @@ A comprehensive [Claude Code](https://claude.ai/code) skill for managing Linear 
 - **Status Management** — Project status UUIDs for workflow automation
 - **MCP Reliability Workarounds** — Fallback patterns for timeout/failure scenarios
 - **Bulk Sync** — Synchronize code changes with Linear via CLI, agents, or hooks
+
+## Quick Start (New Users)
+
+### 1. Install the Skill
+
+```bash
+# Option A: Claude Plugin (Recommended)
+claude plugin add github:wrsmith108/linear-claude-skill
+
+# Option B: Manual Installation
+git clone https://github.com/wrsmith108/linear-claude-skill ~/.claude/skills/linear
+cd ~/.claude/skills/linear && npm install
+```
+
+### 2. Run Setup Check
+
+```bash
+npx tsx ~/.claude/skills/linear/skills/linear/scripts/setup.ts
+```
+
+This checks your configuration and tells you exactly what's missing.
+
+### 3. Get Your API Key (If Needed)
+
+1. Open [Linear](https://linear.app) in your browser
+2. Go to **Settings** → **Security & access** → **Personal API keys**
+3. Click **Create key** and copy it (starts with `lin_api_`)
+4. Add to your environment:
+
+```bash
+# Add to shell profile
+echo 'export LINEAR_API_KEY="lin_api_your_key_here"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+### 4. Verify It Works
+
+```bash
+npx tsx ~/.claude/skills/linear/skills/linear/scripts/linear-ops.ts whoami
+```
+
+You should see your name and organization.
+
+### 5. Start Using It
+
+```bash
+# Create an initiative
+npx tsx scripts/linear-ops.ts create-initiative "My Project"
+
+# Create a project
+npx tsx scripts/linear-ops.ts create-project "Phase 1" "My Project"
+
+# Update issue status
+node scripts/linear-helpers.mjs update-status Done 123 124
+
+# See all commands
+npx tsx scripts/linear-ops.ts help
+```
+
+---
 
 ## Installation
 
@@ -26,19 +88,20 @@ claude plugin add github:wrsmith108/linear-claude-skill
 ```bash
 # Clone directly to your skills directory
 git clone https://github.com/wrsmith108/linear-claude-skill ~/.claude/skills/linear
+cd ~/.claude/skills/linear && npm install
 ```
 
 ## Prerequisites
 
-- **Linear API Key** — Generate at Linear → Settings → Security & access → API
-- **Linear MCP Server** — Configure in `.mcp.json`:
+- **Linear API Key** — Generate at Linear → Settings → Security & access → Personal API keys
+- **Linear MCP Server** (Recommended) — Use the **official Linear MCP server** for best reliability:
 
 ```json
 {
   "mcpServers": {
     "linear": {
       "command": "npx",
-      "args": ["-y", "linear-mcp-server"],
+      "args": ["mcp-remote", "https://mcp.linear.app/sse"],
       "env": {
         "LINEAR_API_KEY": "your_api_key"
       }
@@ -46,6 +109,8 @@ git clone https://github.com/wrsmith108/linear-claude-skill ~/.claude/skills/lin
   }
 }
 ```
+
+> **Important**: Always use Linear's official MCP server at `mcp.linear.app`. Do NOT use deprecated community servers like `linear-mcp-server` (npm) or `jerhadf/linear-mcp-server` (GitHub).
 
 ## Directory Structure
 

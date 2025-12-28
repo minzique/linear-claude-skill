@@ -11,39 +11,183 @@ allowed-tools:
 
 Tools and workflows for managing issues, projects, and teams in Linear.
 
+---
+
+## Quick Start (First-Time Users)
+
+### 1. Check Your Setup
+
+Run the setup check to verify your configuration:
+
+```bash
+npx tsx ~/.claude/skills/linear/skills/linear/scripts/setup.ts
+```
+
+This will check:
+- LINEAR_API_KEY is set and valid
+- @linear/sdk is installed
+- Linear CLI availability (optional)
+- MCP configuration (optional)
+
+### 2. Get API Key (If Needed)
+
+If setup reports a missing API key:
+
+1. Open [Linear](https://linear.app) in your browser
+2. Go to **Settings** (gear icon) -> **Security & access** -> **Personal API keys**
+3. Click **Create key** and copy the key (starts with `lin_api_`)
+4. Add to your environment:
+
+```bash
+# Option A: Add to shell profile (~/.zshrc or ~/.bashrc)
+export LINEAR_API_KEY="lin_api_your_key_here"
+
+# Option B: Add to Claude Code environment
+echo 'LINEAR_API_KEY=lin_api_your_key_here' >> ~/.claude/.env
+
+# Then reload your shell or restart Claude Code
+```
+
+### 3. Test Connection
+
+Verify everything works:
+
+```bash
+npx tsx ~/.claude/skills/linear/skills/linear/scripts/query.ts "query { viewer { name } }"
+```
+
+You should see your name from Linear.
+
+### 4. Common Operations
+
+Use the high-level operations script for simple commands:
+
+```bash
+# Create an initiative
+npx tsx scripts/linear-ops.ts create-initiative "My Project" "Description here"
+
+# Create a project linked to an initiative
+npx tsx scripts/linear-ops.ts create-project "Phase 1" "My Project"
+
+# Update issue status (PREFERRED over MCP)
+node scripts/linear-helpers.mjs update-status Done 123 124 125
+
+# List initiatives
+npx tsx scripts/linear-ops.ts list-initiatives
+
+# Show current user
+npx tsx scripts/linear-ops.ts whoami
+```
+
+### 5. Getting Help
+
+```bash
+# Show all available commands
+npx tsx scripts/linear-ops.ts help
+
+# Re-run setup check anytime
+npx tsx scripts/setup.ts
+```
+
+---
+
 ## Tool Selection
 
 Choose the right tool for the task:
 
-1. **GraphQL API / Helper Scripts** - **PREFERRED for high-frequency operations** (status updates, searches, comments)
-2. **MCP tools** - Use ONLY for issue creation (the only reliable MCP operation)
+1. **MCP tools (Official Server)** - **PREFERRED** for most operations when using `mcp.linear.app`
+2. **Helper Scripts / GraphQL API** - Use for bulk operations or when MCP unavailable
 3. **SDK scripts** - Use for complex operations (loops, bulk updates, conditional logic, data transformations)
 
-### MCP Reliability Matrix
+### MCP Server Selection (CRITICAL)
 
-**IMPORTANT**: The Linear MCP server has known reliability issues. **Use the helper script first for status updates** - this is a high-frequency operation that MCP handles poorly.
+**Always use the official Linear MCP server** at `mcp.linear.app`. Configure in your MCP settings:
 
-| Operation | MCP Tool | Reliability | **Recommended Tool** |
-|-----------|----------|-------------|----------------------|
-| Create issue | `linear_create_issue` | ✅ High | MCP |
-| **Update issue status** | `linear_update_issue` | ❌ Unreliable | **`node scripts/linear-helpers.mjs update-status`** |
-| Search issues | `linear_search_issues` | ⚠️ Times out | Helper script or GraphQL |
-| Get user issues | `linear_get_user_issues` | ⚠️ May timeout | GraphQL |
-| Add comment | `linear_add_comment` | ✅ Works with UUIDs | MCP or **`add-comment <num> "body"`** |
+```json
+{
+  "mcpServers": {
+    "linear": {
+      "command": "npx",
+      "args": ["mcp-remote", "https://mcp.linear.app/sse"],
+      "env": { "LINEAR_API_KEY": "your_api_key" }
+    }
+  }
+}
+```
 
-### Quick Status Update (PREFERRED METHOD)
+> **WARNING**: Do NOT use deprecated community servers (`linear-mcp-server` npm package, `jerhadf/linear-mcp-server`). They have critical bugs including a schema mismatch where `status` parameter fails because it's passed directly as `stateId` (requires UUID, not name).
 
-**Always use the helper script for status updates** - it's faster and more reliable than MCP:
+### MCP Reliability Matrix (Official Server)
+
+The **official Linear MCP server** (`mcp.linear.app`) is significantly more reliable than community alternatives:
+
+| Operation | MCP Tool | Reliability | Notes |
+|-----------|----------|-------------|-------|
+| Create issue | `create_issue` | ✅ High | Full support |
+| **Update issue status** | `update_issue` | ✅ **Works with names!** | Use `state: "Done"` directly |
+| List issues | `list_issues` | ✅ High | Supports filters |
+| Search issues | `list_issues` with `query` | ✅ High | Use query parameter |
+| Get user issues | `list_issues` with `assignee: "me"` | ✅ High | Reliable |
+| Add comment | `create_comment` | ✅ High | Works with issue IDs |
+
+**Key Improvement**: The official server accepts human-readable state names (e.g., `state: "Done"`, `state: "In Progress"`) and resolves them to UUIDs internally. No need for manual UUID lookups!
+
+### Quick Status Update
+
+**With the official MCP server**, you can now update status directly using human-readable names:
+
+```
+# Via MCP (official server) - NOW WORKS!
+update_issue with id="issue-uuid", state="Done"
+update_issue with id="issue-uuid", state="In Progress"
+```
+
+**Alternative: API wrapper** (for bulk operations or when MCP unavailable):
 
 ```bash
-# Update single issue
-node scripts/linear-helpers.mjs update-status Done 559
-
-# Update multiple issues at once
-node scripts/linear-helpers.mjs update-status Done 559 560 561
+# Update single issue (use issue identifier like SMI-559)
+node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs update-status --issue SMI-559 --status Done
 
 # Available states: Backlog, Todo, In Progress, In Review, Done, Canceled
 ```
+
+### Linear API Wrapper (scripts/linear-api.mjs)
+
+A complete API wrapper with proper JSON escaping and error handling:
+
+```bash
+# Create issue
+node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs create-issue \
+  --team SMI --title "New feature" --description "Details here" --priority 2
+
+# Update status
+node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs update-status \
+  --issue SMI-123 --status done
+
+# Add comment
+node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs add-comment \
+  --issue SMI-123 --body "Fixed in PR #25"
+
+# Add project update
+node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs add-project-update \
+  --project <PROJECT_UUID> --body "## Status Update\n\nProgress details..." --health onTrack
+
+# List issues
+node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs list-issues \
+  --team SMI --status "In Progress" --limit 20
+
+# List labels
+node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs list-labels --team SMI
+
+# Help
+node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs help
+```
+
+**Benefits over MCP:**
+- Proper JSON escaping (no shell parsing issues)
+- Reliable status updates (uses correct GraphQL types)
+- Batch-friendly for scripting
+- Can be imported as ES module for programmatic use
 
 **Why not MCP?** The `linear_update_issue` MCP tool frequently fails with schema validation errors and timeouts. The helper script uses direct GraphQL which is 100% reliable.
 
@@ -63,54 +207,25 @@ Implementation complete. All tests passing."
 
 **Pattern**: Use MCP for issue creation, helper scripts for status updates and comments, and direct GraphQL for searches and complex queries.
 
-### Why MCP Fails (Root Cause)
+### Historical: Why Community MCP Servers Failed
 
-There are **two distinct failure modes** for Linear MCP:
+> **Note**: These issues are **resolved** with the official Linear MCP server at `mcp.linear.app`. This section is preserved for reference when troubleshooting deprecated community server configurations.
 
-#### 1. SSE Connection Drops (Timeouts)
+#### Issue 1: Status Update Schema Mismatch (FIXED in Official Server)
 
-The 34% timeout rate has a specific technical cause:
+The deprecated `linear-mcp-server` (npm) had a critical bug:
 
-**SSE Connection Drops**: MCP uses Server-Sent Events (SSE) for communication. Most HTTP servers and proxies close an SSE response that stays silent for several minutes. Because Linear's MCP endpoint sends **no keep-alive heartbeat** while idle, the connection hits this "body timeout" and terminates.
+| Community Server | Official Server |
+|------------------|-----------------|
+| `status: "Done"` → passed as `stateId` (UUID required) → ❌ Fails | `state: "Done"` → resolved internally → ✅ Works |
 
-Linear acknowledges this in their docs:
-> "Remote MCP connections are still early and we've found that the connection may fail or require multiple attempts."
+**The official server correctly resolves state names to UUIDs internally.**
 
-**Implications**:
-- Operations taking >30 seconds often timeout
-- Idle connections drop after ~5 minutes
-- Search operations with large result sets are particularly vulnerable
-- Comments fail because UUID resolution adds latency
+#### Issue 2: SSE Connection Timeouts
 
-#### 2. Status Update Schema Mismatch (CRITICAL)
+Both servers can experience SSE connection drops after extended idle periods. The official server has improved keep-alive handling, but for very long operations, helper scripts remain a reliable fallback.
 
-**The `linear_update_issue` tool has a schema/implementation mismatch:**
-
-| What MCP Advertises | What API Requires | Result |
-|---------------------|-------------------|--------|
-| `status: "Done"` (human-readable string) | `stateId: UUID` | ❌ Fails silently or errors |
-
-**Why this happens:**
-- The MCP tool schema describes `status` as a string parameter ("New status")
-- The underlying implementation passes this value directly to Linear's GraphQL API
-- Linear's `issueUpdate` mutation requires `stateId` (a UUID), not a status name
-- Passing `status: "Done"` results in schema validation errors or silent failures
-
-**Example of the failure:**
-```bash
-# ❌ This FAILS - status name is not a valid stateId UUID
-mcp__linear__linear_update_issue(id: "issue-uuid", status: "Done")
-# Error: Invalid stateId format or schema validation error
-
-# ✅ This WORKS - use the helper script instead
-node scripts/linear-helpers.mjs update-status Done 559
-```
-
-**The helper script solves this by:**
-1. Querying `workflowStates` to find the UUID for status name "Done"
-2. Using that UUID in the `issueUpdate` mutation with `stateId` parameter
-
-**Mitigation**: The reliability routing matrix above encodes these learnings—use MCP only for fast, reliable operations (issue creation), and GraphQL/helper scripts for everything else.
+**Best Practice**: Use the official MCP server for most operations. Fall back to helper scripts for bulk operations or timeout-prone scenarios.
 
 ## Critical Requirements
 
