@@ -13,6 +13,58 @@ Tools and workflows for managing issues, projects, and teams in Linear.
 
 ---
 
+## 🔐 Security: Varlock Integration
+
+**CRITICAL**: Never expose API keys in terminal output or Claude's context.
+
+### Safe Commands (Always Use)
+
+```bash
+# Validate LINEAR_API_KEY is set (masked output)
+varlock load 2>&1 | grep LINEAR
+
+# Run commands with secrets injected
+varlock run -- npx tsx scripts/query.ts "query { viewer { name } }"
+
+# Check schema (safe - no values)
+cat .env.schema | grep LINEAR
+```
+
+### Unsafe Commands (NEVER Use)
+
+```bash
+# ❌ NEVER - exposes key to Claude's context
+linear config show
+echo $LINEAR_API_KEY
+printenv | grep LINEAR
+cat .env
+```
+
+### Setup for New Projects
+
+1. Create `.env.schema` with `@sensitive` annotation:
+   ```bash
+   # @type=string(startsWith=lin_api_) @required @sensitive
+   LINEAR_API_KEY=
+   ```
+
+2. Add `LINEAR_API_KEY` to `.env` (never commit this file)
+
+3. Configure MCP to use environment variable:
+   ```json
+   {
+     "mcpServers": {
+       "linear": {
+         "env": { "LINEAR_API_KEY": "${LINEAR_API_KEY}" }
+       }
+     }
+   }
+   ```
+
+4. Use `varlock load` to validate before operations
+
+---
+
 ## Quick Start (First-Time Users)
 
 ### 1. Check Your Setup
@@ -145,8 +197,8 @@ update_issue with id="issue-uuid", state="In Progress"
 **Alternative: API wrapper** (for bulk operations or when MCP unavailable):
 
 ```bash
-# Update single issue (use issue identifier like SMI-559)
-node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs update-status --issue SMI-559 --status Done
+# Update single issue (use issue identifier like ENG-559)
+node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs update-status --issue ENG-559 --status Done
 
 # Available states: Backlog, Todo, In Progress, In Review, Done, Canceled
 ```
@@ -162,11 +214,11 @@ node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs create-issue \
 
 # Update status
 node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs update-status \
-  --issue SMI-123 --status done
+  --issue ENG-123 --status done
 
 # Add comment
 node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs add-comment \
-  --issue SMI-123 --body "Fixed in PR #25"
+  --issue ENG-123 --body "Fixed in PR #25"
 
 # Add project update
 node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs add-project-update \
@@ -346,7 +398,7 @@ When operations take longer than expected, use these patterns to maintain reliab
 For bulk operations, notify the user of progress:
 
 ```javascript
-const issues = ['SMI-432', 'SMI-433', 'SMI-434'];
+const issues = ['ENG-432', 'ENG-433', 'ENG-434'];
 for (let i = 0; i < issues.length; i++) {
   console.log(`Processing ${i + 1}/${issues.length}: ${issues[i]}`);
   // ... operation
@@ -391,13 +443,13 @@ Use `scripts/sync.ts` for reliable bulk state updates:
 
 ```bash
 # Update multiple issues to Done state
-LINEAR_API_KEY=lin_api_xxx npx tsx scripts/sync.ts --issues SMI-432,SMI-433,SMI-434 --state Done
+LINEAR_API_KEY=lin_api_xxx npx tsx scripts/sync.ts --issues ENG-432,ENG-433,ENG-434 --state Done
 
 # Preview changes without applying
-LINEAR_API_KEY=lin_api_xxx npx tsx scripts/sync.ts --issues SMI-432,SMI-433 --state Done --dry-run
+LINEAR_API_KEY=lin_api_xxx npx tsx scripts/sync.ts --issues ENG-432,ENG-433 --state Done --dry-run
 
 # Add comment with state change
-LINEAR_API_KEY=lin_api_xxx npx tsx scripts/sync.ts --issues SMI-432 --state Done --comment "Completed in PR #42"
+LINEAR_API_KEY=lin_api_xxx npx tsx scripts/sync.ts --issues ENG-432 --state Done --comment "Completed in PR #42"
 ```
 
 ### MCP Timeout Workarounds
@@ -711,6 +763,42 @@ node scripts/linear-helpers.mjs add-comment 531 "## Scope Update
 
 ---
 
+### Linking Projects to Initiatives
+
+**Use `initiativeToProjectCreate` to link an existing project to an initiative:**
+
+```graphql
+mutation {
+  initiativeToProjectCreate(input: {
+    initiativeId: "<initiative-uuid>",
+    projectId: "<project-uuid>"
+  }) {
+    success
+    initiativeToProject { id }
+  }
+}
+```
+
+**Example using query.ts:**
+
+```bash
+npx tsx ~/.claude/skills/linear/skills/linear/scripts/query.ts 'mutation {
+  initiativeToProjectCreate(input: {
+    initiativeId: "<initiative-uuid>",
+    projectId: "<project-uuid>"
+  }) {
+    success
+  }
+}'
+```
+
+**Note:** This is different from setting `initiativeId` at project creation time. Use this mutation when:
+- A project was created without an initiative link
+- You need to add a project to an additional initiative
+- Reorganizing projects between initiatives
+
+---
+
 ### New Phase Project Pattern
 
 **Step 0: Run Discovery Checks (see above)**
@@ -724,8 +812,8 @@ linear projects list | grep -i "phase N"
 # 1. Create project via CLI (ONLY if Step 0 found nothing)
 linear projects create --name "Phase N: Name" --description "Short summary"
 
-# 2. Link to initiative
-node scripts/linear-helpers.mjs link-project <project-id>
+# 2. Link to initiative (use initiativeToProjectCreate mutation - see above)
+npx tsx scripts/query.ts 'mutation { initiativeToProjectCreate(input: { initiativeId: "<uuid>", projectId: "<uuid>" }) { success } }'
 
 # 3. Set content (main UI panel)
 # Use GraphQL to set full markdown content
@@ -1015,13 +1103,13 @@ For bulk synchronization of code changes to Linear, see `sync.md`.
 
 ```bash
 # Bulk update issues to Done
-npx ts-node scripts/sync.ts --issues SMI-432,SMI-433,SMI-434 --state Done
+npx ts-node scripts/sync.ts --issues ENG-432,ENG-433,ENG-434 --state Done
 
 # Update project status
-npx ts-node scripts/sync.ts --project "Phase 11" --state completed
+npx ts-node scripts/sync.ts --project "Current Phase" --state completed
 
 # Verify sync completed
-npx ts-node scripts/sync.ts --verify SMI-432,SMI-433 --expected-state Done
+npx ts-node scripts/sync.ts --verify ENG-432,ENG-433 --expected-state Done
 ```
 
 ### Agent-Spawned Sync
@@ -1030,8 +1118,8 @@ Spawn a parallel agent for autonomous sync:
 
 ```javascript
 Task({
-  description: "Sync Phase 11 to Linear",
-  prompt: "Update SMI-432,433,434 to Done. Then update project 'Phase 11' to completed.",
+  description: "Sync Current Phase to Linear",
+  prompt: "Update ENG-432,433,434 to Done. Then update project 'Current Phase' to completed.",
   subagent_type: "general-purpose"
 })
 ```

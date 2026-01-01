@@ -4,12 +4,12 @@
  * Bulk sync Linear issues to a target state
  *
  * Usage:
- *   LINEAR_API_KEY=lin_api_xxx npx tsx sync.ts --issues SMI-432,SMI-433,SMI-434 --state Done
- *   LINEAR_API_KEY=lin_api_xxx npx tsx sync.ts --issues SMI-432 --state "In Progress"
- *   LINEAR_API_KEY=lin_api_xxx npx tsx sync.ts --issues SMI-432,SMI-433 --state Done --comment "Completed in PR #42"
+ *   LINEAR_API_KEY=lin_api_xxx npx tsx sync.ts --issues ENG-432,ENG-433,ENG-434 --state Done
+ *   LINEAR_API_KEY=lin_api_xxx npx tsx sync.ts --issues ENG-432 --state "In Progress"
+ *   LINEAR_API_KEY=lin_api_xxx npx tsx sync.ts --issues ENG-432,ENG-433 --state Done --comment "Completed in PR #42"
  *
  * Options:
- *   --issues    Comma-separated issue identifiers (e.g., SMI-432,SMI-433)
+ *   --issues    Comma-separated issue identifiers (e.g., ENG-432,ENG-433)
  *   --state     Target state name (e.g., Done, "In Progress", Backlog)
  *   --comment   Optional comment to add to each issue
  *   --dry-run   Preview changes without applying them
@@ -56,7 +56,7 @@ function parseArgs(): SyncOptions {
 function printUsage(): void {
   console.error('Usage:');
   console.error(
-    '  LINEAR_API_KEY=lin_api_xxx npx tsx sync.ts --issues SMI-432,SMI-433 --state Done'
+    '  LINEAR_API_KEY=lin_api_xxx npx tsx sync.ts --issues ENG-432,ENG-433 --state Done'
   );
   console.error('');
   console.error('Options:');

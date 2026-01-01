@@ -5,7 +5,7 @@ Auto-synchronize code changes with Linear issues using parallel agents. Ensures 
 ## When to Use
 
 Invoke sync when:
-- Completing implementation of Linear issues (SMI-XXX)
+- Completing implementation of Linear issues (ENG-XXX)
 - Finishing bug fixes referenced in commits
 - Closing out a phase with multiple issues
 - Before creating PRs (ensure Linear reflects current state)
@@ -18,10 +18,10 @@ Update multiple issues to a target state:
 
 ```bash
 # Via SDK script
-npx ts-node scripts/sync.ts --issues SMI-432,SMI-433,SMI-434 --state Done
+npx ts-node scripts/sync.ts --issues ENG-432,ENG-433,ENG-434 --state Done
 
 # Update project status
-npx ts-node scripts/sync.ts --project "Phase 11: Search" --state completed
+npx ts-node scripts/sync.ts --project "Current Phase" --state completed
 ```
 
 ### Mode 2: Agent-Spawned Sync
@@ -30,12 +30,12 @@ Spawn a parallel agent via Task tool for autonomous sync:
 
 ```javascript
 Task({
-  description: "Sync Phase 11 to Linear",
+  description: "Sync Current Phase to Linear",
   prompt: `
     Update these Linear issues to Done status:
-    SMI-432, SMI-433, SMI-434, SMI-435, SMI-436, SMI-437
+    ENG-432, ENG-433, ENG-434, ENG-435, ENG-436, ENG-437
 
-    Then update project "Phase 11: Search" status to "completed".
+    Then update project "Current Phase" status to "completed".
 
     Use GraphQL mutations (MCP times out on bulk ops).
     Report success/failure counts.
@@ -72,13 +72,13 @@ The hook detects Linear issue references in changed files and outputs context fo
 
 ```bash
 # Update multiple issues to Done
-npx ts-node scripts/sync.ts --issues SMI-432,SMI-433,SMI-434,SMI-435 --state Done
+npx ts-node scripts/sync.ts --issues ENG-432,ENG-433,ENG-434,ENG-435 --state Done
 
 # Output:
-# ✅ SMI-432 → Done
-# ✅ SMI-433 → Done
-# ✅ SMI-434 → Done
-# ✅ SMI-435 → Done
+# ✅ ENG-432 → Done
+# ✅ ENG-433 → Done
+# ✅ ENG-434 → Done
+# ✅ ENG-435 → Done
 # Synced 4/4 issues to Done
 ```
 
@@ -86,7 +86,7 @@ npx ts-node scripts/sync.ts --issues SMI-432,SMI-433,SMI-434,SMI-435 --state Don
 
 ```bash
 # By project name (searches for match)
-npx ts-node scripts/sync.ts --project "Phase 11" --state completed
+npx ts-node scripts/sync.ts --project "Current Phase" --state completed
 
 # By project UUID (direct)
 npx ts-node scripts/sync.ts --project-id f41c0e8b-c59c-4aa1-8f50-d44c2820396f --state completed
@@ -97,9 +97,9 @@ npx ts-node scripts/sync.ts --project-id f41c0e8b-c59c-4aa1-8f50-d44c2820396f --
 ```bash
 # Update issues AND project in one command
 npx ts-node scripts/sync.ts \
-  --issues SMI-432,SMI-433,SMI-434 \
+  --issues ENG-432,ENG-433,ENG-434 \
   --state Done \
-  --project "Phase 11" \
+  --project "Current Phase" \
   --project-state completed
 ```
 
@@ -109,13 +109,13 @@ For swarm coordination, store sync state in AgentDB:
 
 ```bash
 # Store pending sync context
-npx claude-flow memory store "linear:pending_sync" '["SMI-432","SMI-433"]' --namespace phase11
+npx claude-flow memory store "linear:pending_sync" '["ENG-432","ENG-433"]' --namespace current-phase
 
 # Agent reads and processes
-npx claude-flow memory get "linear:pending_sync" --namespace phase11
+npx claude-flow memory get "linear:pending_sync" --namespace current-phase
 
 # Store results for verification
-npx claude-flow memory store "linear:sync_results" '{"done":16,"failed":0}' --namespace phase11
+npx claude-flow memory store "linear:sync_results" '{"done":16,"failed":0}' --namespace current-phase
 ```
 
 ### Swarm Sync Pattern
@@ -123,14 +123,14 @@ npx claude-flow memory store "linear:sync_results" '{"done":16,"failed":0}' --na
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    COORDINATOR                               │
-│   Stores: phase11:pending_sync = ["SMI-432", "SMI-433"...]  │
+│   Stores: current-phase:pending_sync = ["ENG-432", "ENG-433"...]  │
 └─────────────────────┬───────────────────────────────────────┘
                       │
         ┌─────────────┴─────────────┐
         ▼                           ▼
 ┌───────────────┐          ┌───────────────┐
 │  sync-agent-1 │          │  sync-agent-2 │
-│  SMI-432-437  │          │  SMI-441-448  │
+│  ENG-432-437  │          │  ENG-441-448  │
 └───────┬───────┘          └───────┬───────┘
         │                          │
         └──────────┬───────────────┘
@@ -149,18 +149,18 @@ Spawn multiple sync agents for independent issue batches:
 // Parallel execution via Task tool (single message, multiple calls)
 [
   Task({
-    description: "Sync SMI-432-437",
-    prompt: "Update SMI-432,433,434,435,436,437 to Done via GraphQL",
+    description: "Sync ENG-432-437",
+    prompt: "Update ENG-432,433,434,435,436,437 to Done via GraphQL",
     subagent_type: "general-purpose"
   }),
   Task({
-    description: "Sync SMI-441-448",
-    prompt: "Update SMI-441,442,443,444,446,447,448 to Done via GraphQL",
+    description: "Sync ENG-441-448",
+    prompt: "Update ENG-441,442,443,444,446,447,448 to Done via GraphQL",
     subagent_type: "general-purpose"
   }),
   Task({
     description: "Update project status",
-    prompt: "Update project 'Phase 11: Search' to completed state",
+    prompt: "Update project 'Current Phase' to completed state",
     subagent_type: "general-purpose"
   })
 ]
@@ -172,12 +172,12 @@ Always verify sync completed successfully:
 
 ```bash
 # Query updated issues
-npx ts-node scripts/sync.ts --verify SMI-432,SMI-433,SMI-434 --expected-state Done
+npx ts-node scripts/sync.ts --verify ENG-432,ENG-433,ENG-434 --expected-state Done
 
 # Output:
-# ✅ SMI-432: Done
-# ✅ SMI-433: Done
-# ✅ SMI-434: Done
+# ✅ ENG-432: Done
+# ✅ ENG-433: Done
+# ✅ ENG-434: Done
 # Verification passed: 3/3 in expected state
 ```
 
@@ -192,14 +192,14 @@ Linear API can fail silently. The sync script handles:
 
 ```bash
 # With verbose output for debugging
-npx ts-node scripts/sync.ts --issues SMI-432,SMI-433 --state Done --verbose
+npx ts-node scripts/sync.ts --issues ENG-432,ENG-433 --state Done --verbose
 
 # Output includes:
 # [DEBUG] Getting workflow state ID for "Done"
 # [DEBUG] State ID: 12911ddd-92bf-41dd-866b-8071290cb250
 # [DEBUG] Getting UUIDs for 2 issues
-# [DEBUG] Updating SMI-432 (bcbb5f01-8a08-4f25-916c-c8d56f2eb671)
-# ✅ SMI-432 → Done
+# [DEBUG] Updating ENG-432 (bcbb5f01-8a08-4f25-916c-c8d56f2eb671)
+# ✅ ENG-432 → Done
 # ...
 ```
 
@@ -211,16 +211,16 @@ After completing a feature:
 
 ```bash
 # 1. Identify issues from git commits
-git log --oneline -10 | grep -oE 'SMI-[0-9]+'
+git log --oneline -10 | grep -oE 'ENG-[0-9]+'
 
 # 2. Bulk update to Done
-npx ts-node scripts/sync.ts --issues SMI-432,SMI-433,SMI-434 --state Done
+npx ts-node scripts/sync.ts --issues ENG-432,ENG-433,ENG-434 --state Done
 
 # 3. Update project status
-npx ts-node scripts/sync.ts --project "Phase 11" --state completed
+npx ts-node scripts/sync.ts --project "Current Phase" --state completed
 
 # 4. Verify
-npx ts-node scripts/sync.ts --verify SMI-432,SMI-433,SMI-434 --expected-state Done
+npx ts-node scripts/sync.ts --verify ENG-432,ENG-433,ENG-434 --expected-state Done
 ```
 
 ### Phase Completion Sync
@@ -229,18 +229,18 @@ When closing out a phase:
 
 ```bash
 # Get all phase issues
-npx ts-node scripts/sync.ts --list-project "Phase 11"
+npx ts-node scripts/sync.ts --list-project "Current Phase"
 
 # Review which need updating
 # ... identify issues still in Backlog/In Progress ...
 
 # Bulk update implemented issues
 npx ts-node scripts/sync.ts \
-  --issues SMI-432,SMI-433,...,SMI-472 \
+  --issues ENG-432,ENG-433,...,ENG-472 \
   --state Done
 
 # Update project to completed
-npx ts-node scripts/sync.ts --project "Phase 11" --state completed
+npx ts-node scripts/sync.ts --project "Current Phase" --state completed
 ```
 
 ### PR Preparation Sync
