@@ -115,11 +115,14 @@ You should see your name from Linear.
 Use the high-level operations script for simple commands:
 
 ```bash
+# Create an issue in a project
+npx tsx scripts/linear-ops.ts create-issue "My Project" "Fix login bug" "Users cannot log in" --priority 2
+
 # Create an initiative
-npx tsx scripts/linear-ops.ts create-initiative "My Project" "Description here"
+npx tsx scripts/linear-ops.ts create-initiative "Q1 Goals" "Key initiatives for Q1"
 
 # Create a project linked to an initiative
-npx tsx scripts/linear-ops.ts create-project "Phase 1" "My Project"
+npx tsx scripts/linear-ops.ts create-project "Phase 1" "Q1 Goals"
 
 # Update issue status (PREFERRED over MCP)
 node scripts/linear-helpers.mjs update-status Done 123 124 125

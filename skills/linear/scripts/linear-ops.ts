@@ -8,6 +8,7 @@
  *   npx tsx linear-ops.ts <command> [args]
  *
  * Commands:
+ *   create-issue <project> <title> [desc]    Create an issue in a project
  *   create-initiative <name> [description]   Create a new initiative
  *   create-project <name> [initiative]       Create a project (optionally linked to initiative)
  *   create-project-update <project> <body>   Create a project update
@@ -38,6 +39,92 @@ const client = new LinearClient({ apiKey: API_KEY });
 
 // Command implementations
 const commands: Record<string, (...args: string[]) => Promise<void>> = {
+
+  async 'create-issue'(projectName: string, title: string, description?: string, ...flags: string[]) {
+    if (!projectName || !title) {
+      console.error('Usage: create-issue <project-name> <title> [description] [--priority 1-4] [--labels label1,label2]');
+      console.error('Example: create-issue "My Project" "Fix login bug" "Users cannot log in"');
+      console.error('\nPriority: 1=urgent, 2=high, 3=medium, 4=low (default: 3)');
+      process.exit(1);
+    }
+
+    // Parse flags
+    let priority = 3;
+    let labelNames: string[] = [];
+
+    for (let i = 0; i < flags.length; i++) {
+      if (flags[i] === '--priority' && flags[i + 1]) {
+        priority = parseInt(flags[i + 1], 10);
+        i++;
+      } else if (flags[i] === '--labels' && flags[i + 1]) {
+        labelNames = flags[i + 1].split(',').map(l => l.trim());
+        i++;
+      }
+    }
+
+    console.log(`Creating issue in project: ${projectName}...`);
+
+    // Find project by name
+    const projects = await client.projects({
+      filter: { name: { containsIgnoreCase: projectName } }
+    });
+
+    if (projects.nodes.length === 0) {
+      console.error(`[ERROR] Project "${projectName}" not found`);
+      process.exit(1);
+    }
+
+    const project = projects.nodes[0];
+    console.log(`  Found project: ${project.name}`);
+
+    // Get team from project
+    const teams = await client.teams();
+    if (teams.nodes.length === 0) {
+      console.error('[ERROR] No teams found in your workspace');
+      process.exit(1);
+    }
+    const team = teams.nodes[0];
+    console.log(`  Using team: ${team.name}`);
+
+    // Resolve label names to IDs if provided
+    let labelIds: string[] = [];
+    if (labelNames.length > 0) {
+      const labels = await team.labels();
+      for (const name of labelNames) {
+        const label = labels.nodes.find(l =>
+          l.name.toLowerCase() === name.toLowerCase()
+        );
+        if (label) {
+          labelIds.push(label.id);
+          console.log(`  Found label: ${label.name}`);
+        } else {
+          console.log(`  [WARNING] Label "${name}" not found, skipping`);
+        }
+      }
+    }
+
+    const result = await client.createIssue({
+      teamId: team.id,
+      projectId: project.id,
+      title,
+      description: description || '',
+      priority,
+      ...(labelIds.length > 0 && { labelIds })
+    });
+
+    const issue = await result.issue;
+    if (issue) {
+      console.log('\n[SUCCESS] Issue created!');
+      console.log(`  ID:       ${issue.identifier}`);
+      console.log(`  Title:    ${issue.title}`);
+      console.log(`  Priority: ${priority}`);
+      console.log(`  Project:  ${project.name}`);
+      console.log(`  URL:      ${issue.url}`);
+    } else {
+      console.error('[ERROR] Failed to create issue');
+      process.exit(1);
+    }
+  },
 
   async 'create-initiative'(name: string, description?: string) {
     if (!name) {
@@ -393,6 +480,10 @@ Usage:
   npx tsx linear-ops.ts <command> [arguments]
 
 Commands:
+  create-issue <project-name> <title> [description] [--priority 1-4] [--labels label1,label2]
+    Create a new issue in a project
+    Priority: 1=urgent, 2=high, 3=medium, 4=low (default: 3)
+
   create-initiative <name> [description]
     Create a new initiative
 
@@ -425,6 +516,7 @@ Commands:
     Show this help message
 
 Examples:
+  npx tsx linear-ops.ts create-issue "My Project" "Fix login bug" "Users cannot log in" --priority 2
   npx tsx linear-ops.ts create-initiative "Q1 2025 Goals" "Key initiatives for Q1"
   npx tsx linear-ops.ts create-project "Phase 1: Foundation" "Q1 2025 Goals"
   npx tsx linear-ops.ts create-project-update "My Project" "## Summary\\n\\nWork completed"
