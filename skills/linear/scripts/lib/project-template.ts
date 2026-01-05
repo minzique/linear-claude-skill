@@ -10,9 +10,9 @@
  * 6. Post-execution verification
  */
 import { LinearClient } from '@linear/sdk'
-import { linkProjectToInitiative, INITIATIVES } from './initiative'
-import { ensureLabelsExist, applyLabelsToIssue, extractUniqueLabels } from './labels'
-import { verifyProjectCreation, printVerificationReport } from './verify'
+import { linkProjectToInitiative, DEFAULT_INITIATIVE_ID } from './initiative'
+import { ensureLabelsExist, extractUniqueLabels } from './labels'
+import { verifyProjectCreation } from './verify'
 
 const client = new LinearClient({ apiKey: process.env.LINEAR_API_KEY })
 
@@ -256,18 +256,24 @@ export async function createProject(
 }
 
 /**
- * Shorthand for Skillsmith projects
+ * Create a project using the default initiative from environment
+ *
+ * Requires LINEAR_DEFAULT_INITIATIVE_ID to be set
  */
-export async function createSkillsmithProject(
+export async function createProjectWithDefaults(
   config: Omit<ProjectConfig, 'initiative'>
 ): Promise<CreateResult> {
+  if (!DEFAULT_INITIATIVE_ID) {
+    throw new Error('LINEAR_DEFAULT_INITIATIVE_ID environment variable is required')
+  }
+
   // Get team
   const teams = await client.teams()
   const team = teams.nodes[0]
 
   return createProject(team.id, {
     ...config,
-    initiative: INITIATIVES.SKILLSMITH
+    initiative: DEFAULT_INITIATIVE_ID
   })
 }
 
@@ -280,7 +286,7 @@ if (require.main === module) {
       console.log('Example ProjectConfig:')
       console.log(`
 const config: ProjectConfig = {
-  name: 'Skillsmith Phase X: Feature Name',
+  name: 'My Project Phase X: Feature Name',
   shortDescription: 'Short description under 255 chars for sidebar display.',
   content: \`# Phase X: Feature Name
 
@@ -300,7 +306,7 @@ Description of epic.
 - [ ] Criterion 2
 \`,
   state: 'planned',
-  initiative: INITIATIVES.SKILLSMITH,
+  initiative: '<your-initiative-uuid>',  // Or use DEFAULT_INITIATIVE_ID
   issues: [
     {
       title: 'Issue title',
@@ -317,7 +323,10 @@ Description of epic.
       console.log('  project-template.ts example  - Show example config')
       console.log('')
       console.log('Import and use in scripts:')
-      console.log('  import { createSkillsmithProject } from "./lib/project-template"')
+      console.log('  import { createProject, createProjectWithDefaults } from "./lib/project-template"')
+      console.log('')
+      console.log('Environment:')
+      console.log('  LINEAR_DEFAULT_INITIATIVE_ID - Default initiative ID for createProjectWithDefaults()')
     }
   }
 

@@ -8,7 +8,7 @@
  * - All labels applied
  */
 import { LinearClient } from '@linear/sdk'
-import { isProjectLinkedToInitiative, INITIATIVES } from './initiative'
+import { isProjectLinkedToInitiative, DEFAULT_INITIATIVE_ID } from './initiative'
 import { verifyLabelsApplied } from './labels'
 
 const client = new LinearClient({ apiKey: process.env.LINEAR_API_KEY })
@@ -43,7 +43,7 @@ export async function verifyProjectCreation(
   projectName: string,
   expectedIssueCount: number,
   expectedLabels?: Record<string, string[]>,
-  initiativeId: string = INITIATIVES.SKILLSMITH
+  initiativeId: string = DEFAULT_INITIATIVE_ID
 ): Promise<ProjectVerification> {
   const verification: ProjectVerification = {
     project: {
@@ -149,9 +149,15 @@ export async function verifyProjectCreation(
 }
 
 /**
- * Verify all Skillsmith projects
+ * Verify all projects for an initiative
+ *
+ * @param initiativeId - The initiative ID to verify projects against
+ * @param projectFilter - Optional filter (e.g., { name: { contains: 'MyProject' } })
  */
-export async function verifyAllSkillsmithProjects(): Promise<{
+export async function verifyProjectsForInitiative(
+  initiativeId: string = DEFAULT_INITIATIVE_ID,
+  projectFilter?: { name?: { contains?: string; eq?: string } }
+): Promise<{
   projects: ProjectVerification[]
   summary: {
     total: number
@@ -160,9 +166,11 @@ export async function verifyAllSkillsmithProjects(): Promise<{
     issues: string[]
   }
 }> {
-  const projects = await client.projects({
-    filter: { name: { contains: 'Skillsmith' } }
-  })
+  if (!initiativeId) {
+    throw new Error('initiativeId is required. Set LINEAR_DEFAULT_INITIATIVE_ID or pass explicitly.')
+  }
+
+  const projects = await client.projects(projectFilter ? { filter: projectFilter } : undefined)
 
   const verifications: ProjectVerification[] = []
   const summary = {
@@ -182,7 +190,7 @@ export async function verifyAllSkillsmithProjects(): Promise<{
       proj.name,
       issues.nodes.length,
       undefined,
-      INITIATIVES.SKILLSMITH
+      initiativeId
     )
 
     verifications.push(verification)
@@ -235,8 +243,18 @@ if (require.main === module) {
     const command = process.argv[2]
 
     if (command === 'all') {
-      console.log('=== Verifying All Skillsmith Projects ===\n')
-      const result = await verifyAllSkillsmithProjects()
+      const initiativeId = process.argv[3] || DEFAULT_INITIATIVE_ID
+      const projectFilter = process.argv[4]
+
+      if (!initiativeId) {
+        console.log('Usage: verify.ts all <initiativeId> [projectNameFilter]')
+        console.log('Or set LINEAR_DEFAULT_INITIATIVE_ID environment variable')
+        process.exit(1)
+      }
+
+      console.log(`=== Verifying Projects for Initiative ${initiativeId} ===\n`)
+      const filter = projectFilter ? { name: { contains: projectFilter } } : undefined
+      const result = await verifyProjectsForInitiative(initiativeId, filter)
 
       for (const verification of result.projects) {
         printVerificationReport(verification)
@@ -254,18 +272,22 @@ if (require.main === module) {
     } else if (command === 'project') {
       const projectName = process.argv[3]
       const expectedCount = parseInt(process.argv[4] || '0', 10)
+      const initiativeId = process.argv[5] || DEFAULT_INITIATIVE_ID
 
       if (!projectName) {
-        console.log('Usage: verify.ts project <projectName> [expectedIssueCount]')
+        console.log('Usage: verify.ts project <projectName> [expectedIssueCount] [initiativeId]')
         process.exit(1)
       }
 
-      const verification = await verifyProjectCreation(projectName, expectedCount)
+      const verification = await verifyProjectCreation(projectName, expectedCount, undefined, initiativeId)
       printVerificationReport(verification)
     } else {
       console.log('Usage:')
-      console.log('  verify.ts all                          - Verify all Skillsmith projects')
-      console.log('  verify.ts project <name> [issueCount]  - Verify specific project')
+      console.log('  verify.ts all <initiativeId> [projectFilter]       - Verify all projects for initiative')
+      console.log('  verify.ts project <name> [issueCount] [initiative] - Verify specific project')
+      console.log('')
+      console.log('Environment:')
+      console.log('  LINEAR_DEFAULT_INITIATIVE_ID - Default initiative ID')
     }
   }
 

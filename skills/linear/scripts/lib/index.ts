@@ -4,15 +4,20 @@
  * This module provides standardized utilities for Linear operations.
  * All project creation scripts MUST use these utilities to ensure
  * consistency and avoid regressions.
+ *
+ * Configuration:
+ *   LINEAR_API_KEY              - Required for all operations
+ *   LINEAR_DEFAULT_INITIATIVE_ID - Optional default initiative for linking
  */
 
 // Initiative utilities
 export {
-  INITIATIVES,
+  DEFAULT_INITIATIVE_ID,
+  INITIATIVES,  // Deprecated, use DEFAULT_INITIATIVE_ID
   linkProjectToInitiative,
   isProjectLinkedToInitiative,
   getProjectInitiativeStatus,
-  linkAllSkillsmithProjects
+  linkProjectsToInitiative
 } from './initiative'
 
 // Label utilities
@@ -27,7 +32,7 @@ export {
 // Verification utilities
 export {
   verifyProjectCreation,
-  verifyAllSkillsmithProjects,
+  verifyProjectsForInitiative,
   printVerificationReport,
   type ProjectVerification
 } from './verify'
@@ -35,7 +40,7 @@ export {
 // Project template
 export {
   createProject,
-  createSkillsmithProject,
+  createProjectWithDefaults,
   type ProjectConfig,
   type IssueConfig,
   type CreateResult

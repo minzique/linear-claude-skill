@@ -8,9 +8,13 @@ import { LinearClient } from '@linear/sdk'
 
 const client = new LinearClient({ apiKey: process.env.LINEAR_API_KEY })
 
-// Known initiative IDs
+// Default initiative ID - set via environment or override in function calls
+// Users should set LINEAR_DEFAULT_INITIATIVE_ID in their environment
+export const DEFAULT_INITIATIVE_ID = process.env.LINEAR_DEFAULT_INITIATIVE_ID || ''
+
+// Legacy export for backwards compatibility (deprecated)
 export const INITIATIVES = {
-  SKILLSMITH: '5e1cebfe-f4bb-42c1-988d-af792fc4253b'
+  DEFAULT: DEFAULT_INITIATIVE_ID
 } as const
 
 /**
@@ -137,16 +141,24 @@ export async function getProjectInitiativeStatus(): Promise<
 }
 
 /**
- * Link all Skillsmith projects to Skillsmith initiative
+ * Link all projects matching a filter to an initiative
+ *
+ * @param initiativeId - The initiative to link projects to
+ * @param projectFilter - Optional filter (e.g., { name: { contains: 'MyProject' } })
  */
-export async function linkAllSkillsmithProjects(): Promise<{
+export async function linkProjectsToInitiative(
+  initiativeId: string,
+  projectFilter?: { name?: { contains?: string; eq?: string } }
+): Promise<{
   linked: string[]
   failed: string[]
   alreadyLinked: string[]
 }> {
-  const projects = await client.projects({
-    filter: { name: { contains: 'Skillsmith' } }
-  })
+  if (!initiativeId) {
+    throw new Error('initiativeId is required. Set LINEAR_DEFAULT_INITIATIVE_ID or pass explicitly.')
+  }
+
+  const projects = await client.projects(projectFilter ? { filter: projectFilter } : undefined)
 
   const linked: string[] = []
   const failed: string[] = []
@@ -154,14 +166,14 @@ export async function linkAllSkillsmithProjects(): Promise<{
 
   for (const proj of projects.nodes) {
     // Check if already linked
-    const isLinked = await isProjectLinkedToInitiative(proj.id, INITIATIVES.SKILLSMITH)
+    const isLinked = await isProjectLinkedToInitiative(proj.id, initiativeId)
     if (isLinked) {
       alreadyLinked.push(proj.name)
       continue
     }
 
     // Link to initiative
-    const result = await linkProjectToInitiative(proj.id, INITIATIVES.SKILLSMITH)
+    const result = await linkProjectToInitiative(proj.id, initiativeId)
     if (result.success) {
       linked.push(proj.name)
     } else {
@@ -175,26 +187,57 @@ export async function linkAllSkillsmithProjects(): Promise<{
 // CLI entry point
 if (require.main === module) {
   async function main() {
-    console.log('=== Linking Skillsmith Projects to Initiative ===\n')
+    const command = process.argv[2]
+    const initiativeId = process.argv[3] || DEFAULT_INITIATIVE_ID
+    const projectFilter = process.argv[4]
 
-    const result = await linkAllSkillsmithProjects()
+    if (command === 'link') {
+      if (!initiativeId) {
+        console.log('Usage: initiative.ts link <initiativeId> [projectNameFilter]')
+        console.log('Or set LINEAR_DEFAULT_INITIATIVE_ID environment variable')
+        process.exit(1)
+      }
 
-    if (result.alreadyLinked.length > 0) {
-      console.log('Already linked:')
-      result.alreadyLinked.forEach(p => console.log(`  ✓ ${p}`))
+      console.log(`=== Linking Projects to Initiative ${initiativeId} ===\n`)
+
+      const filter = projectFilter ? { name: { contains: projectFilter } } : undefined
+      const result = await linkProjectsToInitiative(initiativeId, filter)
+
+      if (result.alreadyLinked.length > 0) {
+        console.log('Already linked:')
+        result.alreadyLinked.forEach(p => console.log(`  ✓ ${p}`))
+      }
+
+      if (result.linked.length > 0) {
+        console.log('\nNewly linked:')
+        result.linked.forEach(p => console.log(`  ✅ ${p}`))
+      }
+
+      if (result.failed.length > 0) {
+        console.log('\nFailed:')
+        result.failed.forEach(p => console.log(`  ❌ ${p}`))
+      }
+
+      console.log(`\nSummary: ${result.linked.length} linked, ${result.alreadyLinked.length} already linked, ${result.failed.length} failed`)
+    } else if (command === 'check') {
+      const projectId = process.argv[3]
+      const checkInitiativeId = process.argv[4] || DEFAULT_INITIATIVE_ID
+
+      if (!projectId || !checkInitiativeId) {
+        console.log('Usage: initiative.ts check <projectId> <initiativeId>')
+        process.exit(1)
+      }
+
+      const isLinked = await isProjectLinkedToInitiative(projectId, checkInitiativeId)
+      console.log(`Project ${projectId} linked to initiative: ${isLinked ? '✓ Yes' : '✗ No'}`)
+    } else {
+      console.log('Usage:')
+      console.log('  initiative.ts link <initiativeId> [projectNameFilter]  - Link projects to initiative')
+      console.log('  initiative.ts check <projectId> <initiativeId>         - Check if project is linked')
+      console.log('')
+      console.log('Environment:')
+      console.log('  LINEAR_DEFAULT_INITIATIVE_ID - Default initiative ID')
     }
-
-    if (result.linked.length > 0) {
-      console.log('\nNewly linked:')
-      result.linked.forEach(p => console.log(`  ✅ ${p}`))
-    }
-
-    if (result.failed.length > 0) {
-      console.log('\nFailed:')
-      result.failed.forEach(p => console.log(`  ❌ ${p}`))
-    }
-
-    console.log(`\nSummary: ${result.linked.length} linked, ${result.alreadyLinked.length} already linked, ${result.failed.length} failed`)
   }
 
   main().catch(console.error)

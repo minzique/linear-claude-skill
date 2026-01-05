@@ -862,26 +862,45 @@ import {
   linkProjectToInitiative,
   ensureLabelsExist,
   verifyProjectCreation,
-  createSkillsmithProject,
-  INITIATIVES
+  createProject,
+  createProjectWithDefaults,
+  DEFAULT_INITIATIVE_ID
 } from './lib'
 
-// Option 1: Full template (recommended)
-const result = await createSkillsmithProject({
-  name: 'Skillsmith Phase X: Name',
+// Option 1: Full template with explicit initiative
+const result = await createProject(teamId, {
+  name: 'My Project Phase X: Name',
   shortDescription: 'Short 255 char description',
   content: '# Full markdown content...',
   state: 'planned',
+  initiative: '<your-initiative-uuid>',
   issues: [
     { title: 'Issue', description: 'Desc', labels: ['label1'] }
   ]
 })
 
-// Option 2: Manual with utilities
-const linkResult = await linkProjectToInitiative(projectId, INITIATIVES.SKILLSMITH)
+// Option 2: Use environment variable for initiative
+// Requires: LINEAR_DEFAULT_INITIATIVE_ID=<uuid>
+const result2 = await createProjectWithDefaults({
+  name: 'My Project Phase X: Name',
+  shortDescription: 'Short description',
+  content: '# Full content...',
+  state: 'planned',
+  issues: []
+})
+
+// Option 3: Manual with utilities
+const linkResult = await linkProjectToInitiative(projectId, initiativeId)
 const labelResult = await ensureLabelsExist(teamId, ['label1', 'label2'])
-const verification = await verifyProjectCreation('Phase X', expectedCount)
+const verification = await verifyProjectCreation('Phase X', expectedCount, undefined, initiativeId)
 ```
+
+### Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `LINEAR_API_KEY` | Yes | Your Linear API key |
+| `LINEAR_DEFAULT_INITIATIVE_ID` | No | Default initiative for `createProjectWithDefaults()` |
 
 ### Common Mistakes
 
