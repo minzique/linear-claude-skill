@@ -831,6 +831,68 @@ npx tsx scripts/query.ts 'mutation { initiativeToProjectCreate(input: { initiati
 # 7. Add issues to project
 ```
 
+---
+
+## ⚠️ MANDATORY: Project Creation Checklist
+
+> **CRITICAL**: Every script that creates projects MUST follow this checklist.
+> Skipping steps causes recurring regressions (see [retro](../../docs/retros/linear-skill-regression-retro.md)).
+
+### Required Steps
+
+| # | Step | How | Verify |
+|---|------|-----|--------|
+| 1 | **Link to initiative** | `initiativeToProjectCreate` mutation | Check initiative.projects |
+| 2 | **Set description** | `description` field (255 char limit) | View in sidebar |
+| 3 | **Set content** | `content` field via `projectUpdate` | View main panel |
+| 4 | **Add resource links** | `entityExternalLinkCreate` mutation | Check Resources section |
+| 5 | **Create milestones** | `projectMilestoneCreate` mutation | Check Milestones tab |
+| 6 | **Ensure labels exist** | Use `lib/labels.ts` utilities | Query labels before/after |
+| 7 | **Create issues with labels** | Include `labelIds` in `createIssue` | View issue labels |
+| 8 | **Verify issue count** | Compare expected vs actual | Log counts |
+| 9 | **Run verification** | Use `lib/verify.ts` | Check output |
+| 10 | **Report failures** | Log all errors, don't fail silently | Review logs |
+
+### Using Shared Utilities
+
+**Always use the lib/ utilities** to avoid common mistakes:
+
+```typescript
+import {
+  linkProjectToInitiative,
+  ensureLabelsExist,
+  verifyProjectCreation,
+  createSkillsmithProject,
+  INITIATIVES
+} from './lib'
+
+// Option 1: Full template (recommended)
+const result = await createSkillsmithProject({
+  name: 'Skillsmith Phase X: Name',
+  shortDescription: 'Short 255 char description',
+  content: '# Full markdown content...',
+  state: 'planned',
+  issues: [
+    { title: 'Issue', description: 'Desc', labels: ['label1'] }
+  ]
+})
+
+// Option 2: Manual with utilities
+const linkResult = await linkProjectToInitiative(projectId, INITIATIVES.SKILLSMITH)
+const labelResult = await ensureLabelsExist(teamId, ['label1', 'label2'])
+const verification = await verifyProjectCreation('Phase X', expectedCount)
+```
+
+### Common Mistakes
+
+| Mistake | Symptom | Fix |
+|---------|---------|-----|
+| Using `initiativeIds` on `projectUpdate` | Silent failure | Use `initiativeToProjectCreate` mutation |
+| Long description | Truncated in UI | Use `content` for full text, `description` for summary |
+| Case-sensitive label lookup | Labels not applied | Use case-insensitive map (`name.toLowerCase()`) |
+| Silent failures | Missing issues/labels | Always check result, log errors |
+| No post-verification | Issues discovered later | Run `lib/verify.ts` after creation |
+
 ### Resource Links
 
 Add clickable links to projects/initiatives (shows in Resources section):
