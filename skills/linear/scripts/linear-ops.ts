@@ -13,6 +13,7 @@
  *   create-project <name> [initiative]       Create a project (optionally linked to initiative)
  *   create-project-update <project> <body>   Create a project update
  *   create-initiative-update <init> <body>   Create an initiative update
+ *   add-link <project|initiative> <url> <label>  Add external link to project or initiative
  *   status <state> <issue-numbers...>        Update issue status (Done, In Progress, etc.)
  *   list-initiatives                         List all initiatives
  *   list-projects [initiative]               List projects (optionally filter by initiative)
@@ -305,10 +306,105 @@ const commands: Record<string, (...args: string[]) => Promise<void>> = {
     }
   },
 
+  async 'add-link'(targetName: string, url: string, label: string) {
+    if (!targetName || !url || !label) {
+      console.error('Usage: add-link <project-or-initiative-name> <url> <label>');
+      console.error('Example: add-link "Phase 6A" "https://github.com/..." "Implementation Plan"');
+      console.error('\nAdds an external resource link to a project or initiative.');
+      process.exit(1);
+    }
+
+    console.log(`Adding link to: ${targetName}...`);
+
+    // Try to find as project first
+    const projects = await client.projects({
+      filter: { name: { containsIgnoreCase: targetName } }
+    });
+
+    let entityType: 'project' | 'initiative' = 'project';
+    let entityId: string;
+    let entityName: string;
+
+    if (projects.nodes.length > 0) {
+      entityId = projects.nodes[0].id;
+      entityName = projects.nodes[0].name;
+      console.log(`  Found project: ${entityName}`);
+    } else {
+      // Try to find as initiative
+      const initiatives = await client.initiatives({
+        filter: { name: { containsIgnoreCase: targetName } }
+      });
+
+      if (initiatives.nodes.length === 0) {
+        console.error(`[ERROR] No project or initiative found matching "${targetName}"`);
+        process.exit(1);
+      }
+
+      entityType = 'initiative';
+      entityId = initiatives.nodes[0].id;
+      entityName = initiatives.nodes[0].name;
+      console.log(`  Found initiative: ${entityName}`);
+    }
+
+    // Use GraphQL directly since SDK doesn't expose entityExternalLinkCreate
+    const API_URL = 'https://api.linear.app/graphql';
+    const mutation = `
+      mutation CreateExternalLink($input: EntityExternalLinkCreateInput!) {
+        entityExternalLinkCreate(input: $input) {
+          success
+          entityExternalLink {
+            id
+            label
+            url
+          }
+        }
+      }
+    `;
+
+    const input: Record<string, string> = { url, label };
+    if (entityType === 'project') {
+      input.projectId = entityId;
+    } else {
+      input.initiativeId = entityId;
+    }
+
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': API_KEY!
+      },
+      body: JSON.stringify({
+        query: mutation,
+        variables: { input }
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.errors) {
+      console.error('[ERROR] GraphQL errors:', JSON.stringify(data.errors, null, 2));
+      process.exit(1);
+    }
+
+    if (data.data.entityExternalLinkCreate.success) {
+      const link = data.data.entityExternalLinkCreate.entityExternalLink;
+      console.log('\n[SUCCESS] External link added!');
+      console.log(`  ID:    ${link.id}`);
+      console.log(`  Label: ${link.label}`);
+      console.log(`  URL:   ${link.url}`);
+      console.log(`  Added to ${entityType}: ${entityName}`);
+    } else {
+      console.error('[ERROR] Failed to create external link');
+      process.exit(1);
+    }
+  },
+
   async 'status'(state: string, ...issueNumbers: string[]) {
     if (!state || issueNumbers.length === 0) {
       console.error('Usage: status <state> <issue-numbers...>');
       console.error('Example: status Done 123 124 125');
+      console.error('Example: status Done SMI-123 SMI-124  (prefix is stripped automatically)');
       console.error('\nAvailable states: Backlog, Todo, In Progress, In Review, Done, Canceled');
       process.exit(1);
     }
@@ -348,7 +444,9 @@ const commands: Record<string, (...args: string[]) => Promise<void>> = {
     let failed = 0;
 
     for (const num of issueNumbers) {
-      const issueNum = parseInt(num, 10);
+      // Strip prefix if present (e.g., "SMI-123" -> "123", "ENG-456" -> "456")
+      const cleanedNum = num.replace(/^[A-Z]+-/i, '');
+      const issueNum = parseInt(cleanedNum, 10);
       if (isNaN(issueNum)) {
         console.log(`  [SKIP] "${num}" is not a valid issue number`);
         failed++;
@@ -472,6 +570,30 @@ const commands: Record<string, (...args: string[]) => Promise<void>> = {
     }
   },
 
+  // Alias: done <issue-numbers...> -> status Done <issue-numbers...>
+  async 'done'(...issueNumbers: string[]) {
+    if (issueNumbers.length === 0) {
+      console.error('Usage: done <issue-numbers...>');
+      console.error('Example: done 123 124 125');
+      console.error('Example: done SMI-123 SMI-124  (prefix is stripped automatically)');
+      console.error('\nThis is a shortcut for: status Done <issue-numbers...>');
+      process.exit(1);
+    }
+    await commands['status']('Done', ...issueNumbers);
+  },
+
+  // Alias: wip <issue-numbers...> -> status "In Progress" <issue-numbers...>
+  async 'wip'(...issueNumbers: string[]) {
+    if (issueNumbers.length === 0) {
+      console.error('Usage: wip <issue-numbers...>');
+      console.error('Example: wip 123 124 125');
+      console.error('Example: wip SMI-123 SMI-124  (prefix is stripped automatically)');
+      console.error('\nThis is a shortcut for: status "In Progress" <issue-numbers...>');
+      process.exit(1);
+    }
+    await commands['status']('In Progress', ...issueNumbers);
+  },
+
   async 'help'() {
     console.log(`
 Linear High-Level Operations
@@ -496,9 +618,22 @@ Commands:
   create-initiative-update <initiative-name> <body> [--health onTrack|atRisk|offTrack]
     Create an initiative update with markdown body
 
+  add-link <project-or-initiative-name> <url> <label>
+    Add an external resource link to a project or initiative
+    Automatically detects whether the target is a project or initiative
+
   status <state> <issue-numbers...>
     Update issue status (e.g., status Done 123 124 125)
+    Accepts both formats: 123 or SMI-123 (prefix stripped automatically)
     States: Backlog, Todo, In Progress, In Review, Done, Canceled
+
+  done <issue-numbers...>
+    Shortcut for: status Done <issue-numbers...>
+    Example: done SMI-123 SMI-124
+
+  wip <issue-numbers...>
+    Shortcut for: status "In Progress" <issue-numbers...>
+    Example: wip SMI-123
 
   list-initiatives
     List all initiatives in the workspace
@@ -521,7 +656,10 @@ Examples:
   npx tsx linear-ops.ts create-project "Phase 1: Foundation" "Q1 2025 Goals"
   npx tsx linear-ops.ts create-project-update "My Project" "## Summary\\n\\nWork completed"
   npx tsx linear-ops.ts create-initiative-update "My Initiative" "## Phase Complete"
+  npx tsx linear-ops.ts add-link "Phase 6A" "https://github.com/org/repo/docs/plan.md" "Implementation Plan"
   npx tsx linear-ops.ts status Done 123 124 125
+  npx tsx linear-ops.ts done SMI-123 SMI-124
+  npx tsx linear-ops.ts wip SMI-125
   npx tsx linear-ops.ts list-initiatives
 `);
   }
