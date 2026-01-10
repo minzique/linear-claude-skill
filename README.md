@@ -6,6 +6,7 @@ A comprehensive [Claude Code](https://claude.ai/code) skill for managing Linear 
 
 - **First-Time Setup Check** — Automatic configuration validation with actionable guidance
 - **High-Level Operations** — Simple commands for initiatives, projects, and status updates
+- **Sub-Issue Management** — Create and manage parent-child issue relationships
 - **Discovery Before Creation** — Mandatory checks to prevent duplicate projects/issues
 - **MCP Tool Integration** — Simple operations via Linear MCP server
 - **SDK Automation** — Complex operations with TypeScript scripts
@@ -66,6 +67,12 @@ npx tsx scripts/linear-ops.ts create-initiative "My Project"
 # Create a project
 npx tsx scripts/linear-ops.ts create-project "Phase 1" "My Project"
 
+# Create a sub-issue under a parent
+npx tsx scripts/linear-ops.ts create-sub-issue ENG-100 "Add tests" "Unit tests for feature"
+
+# Set parent-child relationships for existing issues
+npx tsx scripts/linear-ops.ts set-parent ENG-100 ENG-101 ENG-102
+
 # Update issue status
 node scripts/linear-helpers.mjs update-status Done 123 124
 
@@ -121,8 +128,9 @@ skills/linear/
 ├── sdk.md            # SDK automation patterns
 ├── sync.md           # Bulk sync patterns
 ├── scripts/
+│   ├── linear-ops.ts # High-level operations (issues, projects, sub-issues)
 │   ├── query.ts      # GraphQL query runner
-│   ├── query.sh      # Shell wrapper
+│   ├── setup.ts      # Configuration checker
 │   └── sync.ts       # Bulk sync CLI tool
 └── hooks/
     └── post-edit.sh  # Auto-sync hook
@@ -193,6 +201,27 @@ query { projectStatuses { nodes { id name } } }
 ```
 
 Common statuses: `Backlog`, `Planned`, `In Progress`, `Completed`, `Canceled`
+
+### Sub-Issue Management
+
+Organize issues into parent-child hierarchies for better tracking:
+
+```bash
+# Create a sub-issue under a parent issue
+# Inherits team and project from parent automatically
+npx tsx scripts/linear-ops.ts create-sub-issue <parent> <title> [description] [--priority 1-4] [--labels label1,label2]
+
+# Set existing issues as children of a parent
+npx tsx scripts/linear-ops.ts set-parent <parent> <child1> <child2> ...
+
+# List all sub-issues of a parent
+npx tsx scripts/linear-ops.ts list-sub-issues <parent>
+```
+
+**When to use sub-issues:**
+- Breaking down features into trackable subtasks
+- Organizing TDD/E2E test issues under a feature issue
+- Sequential phases within a larger initiative
 
 ### Resource Links
 

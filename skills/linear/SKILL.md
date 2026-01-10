@@ -805,14 +805,14 @@ npx tsx scripts/linear-ops.ts list-sub-issues <parent-issue>
 ### Examples
 
 ```bash
-# Create TDD test sub-issue under SMI-1299
-npx tsx scripts/linear-ops.ts create-sub-issue SMI-1299 "TDD: CLI recommend tests" "Unit tests following London School TDD" --priority 2 --labels testing,tdd
+# Create a sub-issue for unit tests under a parent feature issue
+npx tsx scripts/linear-ops.ts create-sub-issue ENG-100 "Add unit tests" "Unit tests for new feature" --priority 2 --labels testing
 
-# Link existing issues as children
-npx tsx scripts/linear-ops.ts set-parent SMI-1299 SMI-1323 SMI-1324
+# Link existing issues as children of a parent
+npx tsx scripts/linear-ops.ts set-parent ENG-100 ENG-101 ENG-102
 
-# Check all sub-issues
-npx tsx scripts/linear-ops.ts list-sub-issues SMI-1299
+# List all sub-issues of a parent
+npx tsx scripts/linear-ops.ts list-sub-issues ENG-100
 ```
 
 ### Notes

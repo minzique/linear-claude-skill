@@ -889,9 +889,9 @@ Commands:
 
 Examples:
   npx tsx linear-ops.ts create-issue "My Project" "Fix login bug" "Users cannot log in" --priority 2
-  npx tsx linear-ops.ts create-sub-issue SMI-1299 "Add TDD tests" "Unit tests for recommend command" --priority 2
-  npx tsx linear-ops.ts set-parent SMI-1299 SMI-1323 SMI-1324
-  npx tsx linear-ops.ts list-sub-issues SMI-1299
+  npx tsx linear-ops.ts create-sub-issue ENG-100 "Add unit tests" "Unit tests for new feature" --priority 2
+  npx tsx linear-ops.ts set-parent ENG-100 ENG-101 ENG-102
+  npx tsx linear-ops.ts list-sub-issues ENG-100
   npx tsx linear-ops.ts create-initiative "Q1 2025 Goals" "Key initiatives for Q1"
   npx tsx linear-ops.ts create-project "Phase 1: Foundation" "Q1 2025 Goals"
   npx tsx linear-ops.ts create-project-update "My Project" "## Summary\\n\\nWork completed"
