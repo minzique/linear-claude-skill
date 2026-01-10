@@ -118,6 +118,15 @@ Use the high-level operations script for simple commands:
 # Create an issue in a project
 npx tsx scripts/linear-ops.ts create-issue "My Project" "Fix login bug" "Users cannot log in" --priority 2
 
+# Create a sub-issue under an existing issue
+npx tsx scripts/linear-ops.ts create-sub-issue SMI-100 "Add unit tests" "Unit tests for this feature" --priority 2
+
+# Set parent-child relationships for existing issues
+npx tsx scripts/linear-ops.ts set-parent SMI-100 SMI-101 SMI-102
+
+# List sub-issues of a parent
+npx tsx scripts/linear-ops.ts list-sub-issues SMI-100
+
 # Create an initiative
 npx tsx scripts/linear-ops.ts create-initiative "Q1 Goals" "Key initiatives for Q1"
 
@@ -200,8 +209,8 @@ update_issue with id="issue-uuid", state="In Progress"
 **Alternative: API wrapper** (for bulk operations or when MCP unavailable):
 
 ```bash
-# Update single issue (use issue identifier like ENG-559)
-node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs update-status --issue ENG-559 --status Done
+# Update single issue (use issue identifier like PROJ-123)
+node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs update-status --issue <TEAM>-123 --status Done
 
 # Available states: Backlog, Todo, In Progress, In Review, Done, Canceled
 ```
@@ -211,17 +220,17 @@ node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs update-status 
 A complete API wrapper with proper JSON escaping and error handling:
 
 ```bash
-# Create issue
+# Create issue (replace <TEAM> with your team key, e.g., ENG, PROJ)
 node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs create-issue \
-  --team SMI --title "New feature" --description "Details here" --priority 2
+  --team <TEAM> --title "New feature" --description "Details here" --priority 2
 
-# Update status
+# Update status (replace <TEAM>-123 with your issue identifier)
 node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs update-status \
-  --issue ENG-123 --status done
+  --issue <TEAM>-123 --status done
 
 # Add comment
 node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs add-comment \
-  --issue ENG-123 --body "Fixed in PR #25"
+  --issue <TEAM>-123 --body "Fixed in PR #25"
 
 # Add project update
 node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs add-project-update \
@@ -229,10 +238,10 @@ node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs add-project-up
 
 # List issues
 node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs list-issues \
-  --team SMI --status "In Progress" --limit 20
+  --team <TEAM> --status "In Progress" --limit 20
 
 # List labels
-node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs list-labels --team SMI
+node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs list-labels --team <TEAM>
 
 # Help
 node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs help
@@ -251,11 +260,11 @@ node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs help
 Add comments without needing to look up UUIDs:
 
 ```bash
-# Simple comment
-node scripts/linear-helpers.mjs add-comment 559 "Fixed in PR #25"
+# Simple comment (use the issue number, e.g., 123 for PROJ-123)
+node scripts/linear-helpers.mjs add-comment 123 "Fixed in PR #25"
 
 # Multi-line comment (use quotes)
-node scripts/linear-helpers.mjs add-comment 559 "## Resolved
+node scripts/linear-helpers.mjs add-comment 123 "## Resolved
 
 Implementation complete. All tests passing."
 ```
@@ -318,8 +327,8 @@ node scripts/linear-helpers.mjs link-project <projectId>
 **⚡ PRIMARY METHOD** - Always use the helper script for status updates (API-first for reliability):
 
 ```bash
-# Update multiple issues to Done
-node scripts/linear-helpers.mjs update-status Done 550 551 552
+# Update multiple issues to Done (use issue numbers without prefix)
+node scripts/linear-helpers.mjs update-status Done 101 102 103
 
 # Available states: Backlog, Todo, In Progress, In Review, Done, Canceled
 ```
@@ -339,9 +348,9 @@ When creating issues, set the appropriate status based on assignment:
 
 Example:
 ```typescript
-// Issue for myself
+// Issue for myself (replace "TEAM" with your team key)
 await linear.create_issue({
-  team: "ENG",
+  team: "TEAM",
   title: "Fix authentication bug",
   assignee: "me",
   state: "Todo"
@@ -349,7 +358,7 @@ await linear.create_issue({
 
 // Unassigned issue
 await linear.create_issue({
-  team: "ENG",
+  team: "TEAM",
   title: "Research API performance",
   state: "Backlog"
 })
@@ -363,8 +372,8 @@ Use `assignee: "me"` to filter issues assigned to the authenticated user:
 // My issues
 await linear.list_issues({ assignee: "me" })
 
-// Team backlog
-await linear.list_issues({ team: "ENG", state: "Backlog" })
+// Team backlog (replace "TEAM" with your team key)
+await linear.list_issues({ team: "TEAM", state: "Backlog" })
 ```
 
 ### Labels
@@ -373,7 +382,7 @@ You can use label names directly in `create_issue` and `update_issue` - no need 
 
 ```typescript
 await linear.create_issue({
-  team: "ENG",
+  team: "TEAM",
   title: "Update documentation",
   labels: ["documentation", "high-priority"]
 })
@@ -401,7 +410,7 @@ When operations take longer than expected, use these patterns to maintain reliab
 For bulk operations, notify the user of progress:
 
 ```javascript
-const issues = ['ENG-432', 'ENG-433', 'ENG-434'];
+const issues = ['PROJ-101', 'PROJ-102', 'PROJ-103'];
 for (let i = 0; i < issues.length; i++) {
   console.log(`Processing ${i + 1}/${issues.length}: ${issues[i]}`);
   // ... operation
@@ -445,14 +454,14 @@ try {
 Use `scripts/sync.ts` for reliable bulk state updates:
 
 ```bash
-# Update multiple issues to Done state
-LINEAR_API_KEY=lin_api_xxx npx tsx scripts/sync.ts --issues ENG-432,ENG-433,ENG-434 --state Done
+# Update multiple issues to Done state (replace PROJ with your team prefix)
+LINEAR_API_KEY=lin_api_xxx npx tsx scripts/sync.ts --issues PROJ-101,PROJ-102,PROJ-103 --state Done
 
 # Preview changes without applying
-LINEAR_API_KEY=lin_api_xxx npx tsx scripts/sync.ts --issues ENG-432,ENG-433 --state Done --dry-run
+LINEAR_API_KEY=lin_api_xxx npx tsx scripts/sync.ts --issues PROJ-101,PROJ-102 --state Done --dry-run
 
 # Add comment with state change
-LINEAR_API_KEY=lin_api_xxx npx tsx scripts/sync.ts --issues ENG-432 --state Done --comment "Completed in PR #42"
+LINEAR_API_KEY=lin_api_xxx npx tsx scripts/sync.ts --issues PROJ-101 --state Done --comment "Completed in PR #42"
 ```
 
 ### MCP Timeout Workarounds
@@ -752,7 +761,7 @@ grep -r "test.describe.skip" tests/e2e/journeys/admin/
 
 **Update Linear immediately when scope changes:**
 ```bash
-node scripts/linear-helpers.mjs add-comment 531 "## Scope Update
+node scripts/linear-helpers.mjs add-comment 123 "## Scope Update
 
 **Discovery:** API endpoints are ALREADY COMPLETE!
 
@@ -763,6 +772,55 @@ node scripts/linear-helpers.mjs add-comment 531 "## Scope Update
 ```
 
 **NEVER assume issue descriptions are accurate. Verify codebase state first.**
+
+---
+
+## Sub-Issue Management (Parent-Child Relationships)
+
+Linear supports hierarchical issue organization through parent-child relationships. Sub-issues (children) appear nested under their parent issue in the UI and inherit certain properties.
+
+### When to Use Sub-Issues
+
+| Scenario | Use Sub-Issues | Example |
+|----------|----------------|---------|
+| Feature breakdown | ✅ Yes | SMI-100 "Auth System" → SMI-101 "TDD tests", SMI-102 "E2E tests" |
+| Related but independent | ❌ No | Two bugs in different areas (use labels instead) |
+| Sequential phases | ✅ Yes | SMI-200 "Phase 1" → SMI-201 "Setup", SMI-202 "Implementation" |
+| Tracking subtasks | ✅ Yes | Break down a large issue into trackable pieces |
+
+### Commands
+
+```bash
+# Create a sub-issue (child) under a parent issue
+# Inherits team and project from parent automatically
+npx tsx scripts/linear-ops.ts create-sub-issue <parent-issue> <title> [description] [--priority 1-4] [--labels label1,label2]
+
+# Set existing issues as children of a parent
+npx tsx scripts/linear-ops.ts set-parent <parent-issue> <child-issues...>
+
+# List all sub-issues of a parent
+npx tsx scripts/linear-ops.ts list-sub-issues <parent-issue>
+```
+
+### Examples
+
+```bash
+# Create TDD test sub-issue under SMI-1299
+npx tsx scripts/linear-ops.ts create-sub-issue SMI-1299 "TDD: CLI recommend tests" "Unit tests following London School TDD" --priority 2 --labels testing,tdd
+
+# Link existing issues as children
+npx tsx scripts/linear-ops.ts set-parent SMI-1299 SMI-1323 SMI-1324
+
+# Check all sub-issues
+npx tsx scripts/linear-ops.ts list-sub-issues SMI-1299
+```
+
+### Notes
+
+- **Inheritance**: Sub-issues automatically inherit the team from the parent
+- **Project linking**: If the parent is in a project, sub-issues can also be added
+- **Status independence**: Each issue maintains its own status (completing a sub-issue doesn't auto-complete the parent)
+- **UI display**: Sub-issues appear indented under their parent in list views
 
 ---
 
@@ -836,7 +894,7 @@ npx tsx scripts/query.ts 'mutation { initiativeToProjectCreate(input: { initiati
 ## ⚠️ MANDATORY: Project Creation Checklist
 
 > **CRITICAL**: Every script that creates projects MUST follow this checklist.
-> Skipping steps causes recurring regressions (see [retro](../../docs/retros/linear-skill-regression-retro.md)).
+> Skipping steps causes recurring issues with orphaned projects and missing links.
 
 ### Required Steps
 
@@ -1186,14 +1244,14 @@ For bulk synchronization of code changes to Linear, see `sync.md`.
 ### Quick Sync Commands
 
 ```bash
-# Bulk update issues to Done
-npx ts-node scripts/sync.ts --issues ENG-432,ENG-433,ENG-434 --state Done
+# Bulk update issues to Done (replace PROJ with your team prefix)
+npx ts-node scripts/sync.ts --issues PROJ-101,PROJ-102,PROJ-103 --state Done
 
 # Update project status
-npx ts-node scripts/sync.ts --project "Current Phase" --state completed
+npx ts-node scripts/sync.ts --project "My Project" --state completed
 
 # Verify sync completed
-npx ts-node scripts/sync.ts --verify ENG-432,ENG-433 --expected-state Done
+npx ts-node scripts/sync.ts --verify PROJ-101,PROJ-102 --expected-state Done
 ```
 
 ### Agent-Spawned Sync
@@ -1202,8 +1260,8 @@ Spawn a parallel agent for autonomous sync:
 
 ```javascript
 Task({
-  description: "Sync Current Phase to Linear",
-  prompt: "Update ENG-432,433,434 to Done. Then update project 'Current Phase' to completed.",
+  description: "Sync project issues to Linear",
+  prompt: "Update PROJ-101,102,103 to Done. Then update project 'My Project' to completed.",
   subagent_type: "general-purpose"
 })
 ```

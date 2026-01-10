@@ -9,6 +9,9 @@
  *
  * Commands:
  *   create-issue <project> <title> [desc]    Create an issue in a project
+ *   create-sub-issue <parent> <title> [desc] Create a sub-issue under a parent issue
+ *   set-parent <parent> <child-issues...>    Set parent-child relationships
+ *   list-sub-issues <parent>                 List sub-issues of a parent
  *   create-initiative <name> [description]   Create a new initiative
  *   create-project <name> [initiative]       Create a project (optionally linked to initiative)
  *   create-project-update <project> <body>   Create a project update
@@ -594,6 +597,226 @@ const commands: Record<string, (...args: string[]) => Promise<void>> = {
     await commands['status']('In Progress', ...issueNumbers);
   },
 
+  // Set parent-child relationship between issues
+  async 'set-parent'(parentIssue: string, ...childIssues: string[]) {
+    if (!parentIssue || childIssues.length === 0) {
+      console.error('Usage: set-parent <parent-issue> <child-issues...>');
+      console.error('Example: set-parent SMI-100 SMI-101 SMI-102');
+      console.error('Example: set-parent 100 101 102  (prefix optional)');
+      console.error('\nSets the first issue as parent of all subsequent issues (sub-issues).');
+      process.exit(1);
+    }
+
+    // Parse parent issue number
+    const parentNum = parseInt(parentIssue.replace(/^[A-Z]+-/i, ''), 10);
+    if (isNaN(parentNum)) {
+      console.error(`[ERROR] "${parentIssue}" is not a valid issue number`);
+      process.exit(1);
+    }
+
+    console.log(`Setting parent-child relationships...`);
+
+    // Find parent issue
+    const parentIssues = await client.issues({
+      filter: { number: { eq: parentNum } }
+    });
+
+    if (parentIssues.nodes.length === 0) {
+      console.error(`[ERROR] Parent issue #${parentNum} not found`);
+      process.exit(1);
+    }
+
+    const parent = parentIssues.nodes[0];
+    console.log(`  Parent: ${parent.identifier} - ${parent.title}`);
+
+    // Process each child issue
+    let success = 0;
+    let failed = 0;
+
+    for (const childIssue of childIssues) {
+      const childNum = parseInt(childIssue.replace(/^[A-Z]+-/i, ''), 10);
+      if (isNaN(childNum)) {
+        console.log(`  [SKIP] "${childIssue}" is not a valid issue number`);
+        failed++;
+        continue;
+      }
+
+      try {
+        const childIssues = await client.issues({
+          filter: { number: { eq: childNum } }
+        });
+
+        if (childIssues.nodes.length === 0) {
+          console.log(`  [NOT FOUND] Issue #${childNum}`);
+          failed++;
+          continue;
+        }
+
+        const child = childIssues.nodes[0];
+        await child.update({ parentId: parent.id });
+        console.log(`  [OK] ${child.identifier} -> child of ${parent.identifier}`);
+        success++;
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        console.log(`  [ERROR] Issue #${childNum}: ${msg}`);
+        failed++;
+      }
+    }
+
+    console.log(`\nResult: ${success} linked as sub-issues, ${failed} failed`);
+    if (failed > 0) process.exit(1);
+  },
+
+  // Create a new issue as a sub-issue (child) of another issue
+  async 'create-sub-issue'(parentIssue: string, title: string, description?: string, ...flags: string[]) {
+    if (!parentIssue || !title) {
+      console.error('Usage: create-sub-issue <parent-issue> <title> [description] [--priority 1-4] [--labels label1,label2]');
+      console.error('Example: create-sub-issue SMI-100 "Implement feature" "Detailed description"');
+      console.error('Example: create-sub-issue 100 "Add tests" --priority 2');
+      console.error('\nCreates a new issue as a child of the specified parent issue.');
+      process.exit(1);
+    }
+
+    // Parse parent issue number
+    const parentNum = parseInt(parentIssue.replace(/^[A-Z]+-/i, ''), 10);
+    if (isNaN(parentNum)) {
+      console.error(`[ERROR] "${parentIssue}" is not a valid issue number`);
+      process.exit(1);
+    }
+
+    // Parse flags
+    let priority = 3;
+    let labelNames: string[] = [];
+
+    for (let i = 0; i < flags.length; i++) {
+      if (flags[i] === '--priority' && flags[i + 1]) {
+        priority = parseInt(flags[i + 1], 10);
+        i++;
+      } else if (flags[i] === '--labels' && flags[i + 1]) {
+        labelNames = flags[i + 1].split(',').map(l => l.trim());
+        i++;
+      }
+    }
+
+    console.log(`Creating sub-issue for parent #${parentNum}...`);
+
+    // Find parent issue
+    const parentIssues = await client.issues({
+      filter: { number: { eq: parentNum } }
+    });
+
+    if (parentIssues.nodes.length === 0) {
+      console.error(`[ERROR] Parent issue #${parentNum} not found`);
+      process.exit(1);
+    }
+
+    const parent = parentIssues.nodes[0];
+    const parentTeam = await parent.team;
+    const parentProject = await parent.project;
+
+    console.log(`  Parent: ${parent.identifier} - ${parent.title}`);
+    console.log(`  Team: ${parentTeam?.name || 'Unknown'}`);
+    if (parentProject) {
+      console.log(`  Project: ${parentProject.name}`);
+    }
+
+    if (!parentTeam) {
+      console.error('[ERROR] Could not determine team from parent issue');
+      process.exit(1);
+    }
+
+    // Resolve label names to IDs if provided
+    let labelIds: string[] = [];
+    if (labelNames.length > 0) {
+      const labels = await parentTeam.labels();
+      for (const name of labelNames) {
+        const label = labels.nodes.find(l =>
+          l.name.toLowerCase() === name.toLowerCase()
+        );
+        if (label) {
+          labelIds.push(label.id);
+          console.log(`  Found label: ${label.name}`);
+        } else {
+          console.log(`  [WARNING] Label "${name}" not found, skipping`);
+        }
+      }
+    }
+
+    // Create issue with parent
+    const result = await client.createIssue({
+      teamId: parentTeam.id,
+      parentId: parent.id,
+      title,
+      description: description || '',
+      priority,
+      ...(parentProject && { projectId: parentProject.id }),
+      ...(labelIds.length > 0 && { labelIds })
+    });
+
+    const issue = await result.issue;
+    if (issue) {
+      console.log('\n[SUCCESS] Sub-issue created!');
+      console.log(`  ID:       ${issue.identifier}`);
+      console.log(`  Title:    ${issue.title}`);
+      console.log(`  Priority: ${priority}`);
+      console.log(`  Parent:   ${parent.identifier}`);
+      console.log(`  URL:      ${issue.url}`);
+    } else {
+      console.error('[ERROR] Failed to create sub-issue');
+      process.exit(1);
+    }
+  },
+
+  // List sub-issues (children) of a parent issue
+  async 'list-sub-issues'(parentIssue: string) {
+    if (!parentIssue) {
+      console.error('Usage: list-sub-issues <parent-issue>');
+      console.error('Example: list-sub-issues SMI-100');
+      console.error('Example: list-sub-issues 100');
+      console.error('\nLists all sub-issues (children) of the specified parent issue.');
+      process.exit(1);
+    }
+
+    // Parse parent issue number
+    const parentNum = parseInt(parentIssue.replace(/^[A-Z]+-/i, ''), 10);
+    if (isNaN(parentNum)) {
+      console.error(`[ERROR] "${parentIssue}" is not a valid issue number`);
+      process.exit(1);
+    }
+
+    console.log(`Fetching sub-issues for #${parentNum}...\n`);
+
+    // Find parent issue
+    const parentIssues = await client.issues({
+      filter: { number: { eq: parentNum } }
+    });
+
+    if (parentIssues.nodes.length === 0) {
+      console.error(`[ERROR] Issue #${parentNum} not found`);
+      process.exit(1);
+    }
+
+    const parent = parentIssues.nodes[0];
+    console.log(`Parent: ${parent.identifier} - ${parent.title}\n`);
+
+    // Get children of this issue
+    const children = await parent.children();
+
+    if (children.nodes.length === 0) {
+      console.log('No sub-issues found.');
+      return;
+    }
+
+    console.log(`Sub-issues (${children.nodes.length}):`);
+    for (const child of children.nodes) {
+      const state = await child.state;
+      console.log(`  - ${child.identifier}: ${child.title}`);
+      console.log(`    Status: ${state?.name || 'Unknown'}`);
+      console.log(`    URL: ${child.url}`);
+      console.log('');
+    }
+  },
+
   async 'help'() {
     console.log(`
 Linear High-Level Operations
@@ -605,6 +828,20 @@ Commands:
   create-issue <project-name> <title> [description] [--priority 1-4] [--labels label1,label2]
     Create a new issue in a project
     Priority: 1=urgent, 2=high, 3=medium, 4=low (default: 3)
+
+  create-sub-issue <parent-issue> <title> [description] [--priority 1-4] [--labels label1,label2]
+    Create a new issue as a child of an existing issue
+    Inherits team and project from parent issue
+    Example: create-sub-issue SMI-100 "Add unit tests"
+
+  set-parent <parent-issue> <child-issues...>
+    Set parent-child relationships between existing issues
+    Useful for organizing issues into hierarchies
+    Example: set-parent SMI-100 SMI-101 SMI-102
+
+  list-sub-issues <parent-issue>
+    List all sub-issues (children) of a parent issue
+    Example: list-sub-issues SMI-100
 
   create-initiative <name> [description]
     Create a new initiative
@@ -652,6 +889,9 @@ Commands:
 
 Examples:
   npx tsx linear-ops.ts create-issue "My Project" "Fix login bug" "Users cannot log in" --priority 2
+  npx tsx linear-ops.ts create-sub-issue SMI-1299 "Add TDD tests" "Unit tests for recommend command" --priority 2
+  npx tsx linear-ops.ts set-parent SMI-1299 SMI-1323 SMI-1324
+  npx tsx linear-ops.ts list-sub-issues SMI-1299
   npx tsx linear-ops.ts create-initiative "Q1 2025 Goals" "Key initiatives for Q1"
   npx tsx linear-ops.ts create-project "Phase 1: Foundation" "Q1 2025 Goals"
   npx tsx linear-ops.ts create-project-update "My Project" "## Summary\\n\\nWork completed"
