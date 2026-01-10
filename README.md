@@ -251,6 +251,19 @@ mutation {
 }
 ```
 
+### Project Updates (Status Reports)
+
+Post status updates to a project's Updates tab:
+
+```bash
+# Using SDK script (recommended)
+LINEAR_API_KEY=lin_api_xxx npx tsx scripts/create-project-update.ts "Project Name" "## Update\n\nBody" onTrack
+```
+
+Health options: `onTrack`, `atRisk`, `offTrack`
+
+See `SKILL.md` for full documentation and GraphQL examples.
+
 ## Usage Examples
 
 ### Create Issue (MCP)

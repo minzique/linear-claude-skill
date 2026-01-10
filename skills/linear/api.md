@@ -95,7 +95,8 @@ With variables:
     "teamId": "TEAM_ID",
     "title": "Issue title",
     "description": "Issue description",
-    "stateId": "STATE_ID"
+    "stateId": "STATE_ID",
+    "projectId": "PROJECT_ID"
   }
 }
 ```
@@ -110,6 +111,29 @@ mutation UpdateIssue($id: String!, $input: IssueUpdateInput!) {
       title
       state { name }
     }
+  }
+}
+```
+
+**Look up project by name:**
+```graphql
+query ProjectByName($filter: ProjectFilter!) {
+  projects(filter: $filter, first: 10) {
+    nodes {
+      id
+      name
+      state
+      slugId
+    }
+  }
+}
+```
+
+With variables:
+```json
+{
+  "filter": {
+    "name": { "containsIgnoreCase": "Phase 6A" }
   }
 }
 ```
