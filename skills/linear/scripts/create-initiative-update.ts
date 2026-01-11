@@ -19,14 +19,15 @@
  */
 
 import { LinearClient } from '@linear/sdk';
-
-type InitiativeHealth = 'onTrack' | 'atRisk' | 'offTrack';
-
-const VALID_HEALTH_VALUES: InitiativeHealth[] = ['onTrack', 'atRisk', 'offTrack'];
-
-function isValidHealth(value: string): value is InitiativeHealth {
-  return VALID_HEALTH_VALUES.includes(value as InitiativeHealth);
-}
+import { EXIT_CODES } from './lib/exit-codes.js';
+import {
+  HealthStatus,
+  VALID_HEALTH_VALUES,
+  isValidHealth,
+  getLinearClient,
+  findInitiativeByName,
+  InitiativeInfo,
+} from './lib/linear-utils.js';
 
 function printUsage(): void {
   console.error('Usage:');
@@ -42,47 +43,6 @@ function printUsage(): void {
   console.error('  npx tsx create-initiative-update.ts "Product Launch" "## Blocked\\n\\nDependency issue" atRisk');
 }
 
-interface InitiativeInfo {
-  id: string;
-  name: string;
-  description?: string;
-}
-
-async function findInitiativeByName(client: LinearClient, initiativeName: string): Promise<InitiativeInfo | null> {
-  // Search for initiatives with case-insensitive partial match
-  const query = `
-    query FindInitiative($filter: InitiativeFilter!) {
-      initiatives(filter: $filter, first: 10) {
-        nodes {
-          id
-          name
-          description
-        }
-      }
-    }
-  `;
-
-  const result = await client.client.rawRequest(query, {
-    filter: {
-      name: { containsIgnoreCase: initiativeName }
-    }
-  });
-
-  const data = result.data as { initiatives: { nodes: InitiativeInfo[] } };
-  const initiatives = data.initiatives.nodes;
-
-  if (initiatives.length === 0) {
-    return null;
-  }
-
-  // If multiple matches, prefer exact match (case-insensitive)
-  const exactMatch = initiatives.find(
-    i => i.name.toLowerCase() === initiativeName.toLowerCase()
-  );
-
-  return exactMatch || initiatives[0];
-}
-
 interface InitiativeUpdateResult {
   success: boolean;
   initiativeUpdate?: {
@@ -96,7 +56,7 @@ async function createInitiativeUpdate(
   client: LinearClient,
   initiativeId: string,
   body: string,
-  health: InitiativeHealth
+  health: HealthStatus
 ): Promise<InitiativeUpdateResult> {
   // Use rawRequest for initiativeUpdateCreate mutation
   const mutation = `
@@ -126,15 +86,6 @@ async function createInitiativeUpdate(
 }
 
 async function main(): Promise<void> {
-  const apiKey = process.env.LINEAR_API_KEY;
-
-  if (!apiKey) {
-    console.error('Error: LINEAR_API_KEY environment variable is required');
-    console.error('');
-    printUsage();
-    process.exit(1);
-  }
-
   const initiativeName = process.argv[2];
   const body = process.argv[3];
   const healthArg = process.argv[4] || 'onTrack';
@@ -143,23 +94,31 @@ async function main(): Promise<void> {
     console.error('Error: Initiative name is required');
     console.error('');
     printUsage();
-    process.exit(1);
+    process.exit(EXIT_CODES.INVALID_ARGUMENTS);
   }
 
   if (!body) {
     console.error('Error: Update body content is required');
     console.error('');
     printUsage();
-    process.exit(1);
+    process.exit(EXIT_CODES.INVALID_ARGUMENTS);
   }
 
   if (!isValidHealth(healthArg)) {
     console.error(`Error: Invalid health value "${healthArg}"`);
     console.error(`Valid values: ${VALID_HEALTH_VALUES.join(', ')}`);
-    process.exit(1);
+    process.exit(EXIT_CODES.VALIDATION_ERROR);
   }
 
-  const client = new LinearClient({ apiKey });
+  let client: LinearClient;
+  try {
+    client = getLinearClient();
+  } catch (error) {
+    console.error(`Error: ${(error as Error).message}`);
+    console.error('');
+    printUsage();
+    process.exit(EXIT_CODES.MISSING_API_KEY);
+  }
 
   // Step 1: Look up initiative by name
   console.log(`Looking up initiative: "${initiativeName}"...`);
@@ -170,7 +129,7 @@ async function main(): Promise<void> {
     console.error('');
     console.error('Tip: List all initiatives with:');
     console.error('  LINEAR_API_KEY=xxx npx tsx scripts/query.ts "query { initiatives { nodes { id name } } }"');
-    process.exit(1);
+    process.exit(EXIT_CODES.RESOURCE_NOT_FOUND);
   }
 
   console.log(`Found initiative: ${initiative.name} (${initiative.id})`);
@@ -184,7 +143,7 @@ async function main(): Promise<void> {
     if (!result.success || !result.initiativeUpdate) {
       console.error('Error: Failed to create initiative update');
       console.error('The API returned success: false');
-      process.exit(1);
+      process.exit(EXIT_CODES.API_ERROR);
     }
 
     // Step 3: Output success with URL
@@ -222,7 +181,7 @@ async function main(): Promise<void> {
     } else {
       console.error(error);
     }
-    process.exit(1);
+    process.exit(EXIT_CODES.API_ERROR);
   }
 }
 

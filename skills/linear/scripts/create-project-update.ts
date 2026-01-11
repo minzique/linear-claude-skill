@@ -19,14 +19,14 @@
  */
 
 import { LinearClient } from '@linear/sdk';
-
-type ProjectHealth = 'onTrack' | 'atRisk' | 'offTrack';
-
-const VALID_HEALTH_VALUES: ProjectHealth[] = ['onTrack', 'atRisk', 'offTrack'];
-
-function isValidHealth(value: string): value is ProjectHealth {
-  return VALID_HEALTH_VALUES.includes(value as ProjectHealth);
-}
+import { EXIT_CODES } from './lib/exit-codes.js';
+import {
+  HealthStatus,
+  VALID_HEALTH_VALUES,
+  isValidHealth,
+  getLinearClient,
+  findProjectByName,
+} from './lib/linear-utils.js';
 
 function printUsage(): void {
   console.error('Usage:');
@@ -42,32 +42,6 @@ function printUsage(): void {
   console.error('  npx tsx create-project-update.ts "Phase 1" "## Blocked\\n\\nAPI issues" atRisk');
 }
 
-async function findProjectByName(client: LinearClient, projectName: string): Promise<{ id: string; name: string; slugId: string } | null> {
-  // Search for projects with case-insensitive partial match
-  const projects = await client.projects({
-    filter: {
-      name: { containsIgnoreCase: projectName }
-    },
-    first: 10
-  });
-
-  if (projects.nodes.length === 0) {
-    return null;
-  }
-
-  // If multiple matches, prefer exact match (case-insensitive)
-  const exactMatch = projects.nodes.find(
-    p => p.name.toLowerCase() === projectName.toLowerCase()
-  );
-
-  const project = exactMatch || projects.nodes[0];
-  return {
-    id: project.id,
-    name: project.name,
-    slugId: project.slugId
-  };
-}
-
 interface ProjectUpdateResult {
   success: boolean;
   projectUpdate?: {
@@ -81,7 +55,7 @@ async function createProjectUpdate(
   client: LinearClient,
   projectId: string,
   body: string,
-  health: ProjectHealth
+  health: HealthStatus
 ): Promise<ProjectUpdateResult> {
   // Use rawRequest since SDK may not have projectUpdateCreate typed
   const mutation = `
@@ -111,15 +85,6 @@ async function createProjectUpdate(
 }
 
 async function main(): Promise<void> {
-  const apiKey = process.env.LINEAR_API_KEY;
-
-  if (!apiKey) {
-    console.error('Error: LINEAR_API_KEY environment variable is required');
-    console.error('');
-    printUsage();
-    process.exit(1);
-  }
-
   const projectName = process.argv[2];
   const body = process.argv[3];
   const healthArg = process.argv[4] || 'onTrack';
@@ -128,23 +93,31 @@ async function main(): Promise<void> {
     console.error('Error: Project name is required');
     console.error('');
     printUsage();
-    process.exit(1);
+    process.exit(EXIT_CODES.INVALID_ARGUMENTS);
   }
 
   if (!body) {
     console.error('Error: Update body content is required');
     console.error('');
     printUsage();
-    process.exit(1);
+    process.exit(EXIT_CODES.INVALID_ARGUMENTS);
   }
 
   if (!isValidHealth(healthArg)) {
     console.error(`Error: Invalid health value "${healthArg}"`);
     console.error(`Valid values: ${VALID_HEALTH_VALUES.join(', ')}`);
-    process.exit(1);
+    process.exit(EXIT_CODES.VALIDATION_ERROR);
   }
 
-  const client = new LinearClient({ apiKey });
+  let client: LinearClient;
+  try {
+    client = getLinearClient();
+  } catch (error) {
+    console.error(`Error: ${(error as Error).message}`);
+    console.error('');
+    printUsage();
+    process.exit(EXIT_CODES.MISSING_API_KEY);
+  }
 
   // Step 1: Look up project by name
   console.log(`Looking up project: "${projectName}"...`);
@@ -155,7 +128,7 @@ async function main(): Promise<void> {
     console.error('');
     console.error('Tip: Check project name spelling or use Linear CLI to list projects:');
     console.error('  linear projects list');
-    process.exit(1);
+    process.exit(EXIT_CODES.RESOURCE_NOT_FOUND);
   }
 
   console.log(`Found project: ${project.name} (${project.id})`);
@@ -169,7 +142,7 @@ async function main(): Promise<void> {
     if (!result.success || !result.projectUpdate) {
       console.error('Error: Failed to create project update');
       console.error('The API returned success: false');
-      process.exit(1);
+      process.exit(EXIT_CODES.API_ERROR);
     }
 
     // Step 3: Output success with URL
@@ -207,7 +180,7 @@ async function main(): Promise<void> {
     } else {
       console.error(error);
     }
-    process.exit(1);
+    process.exit(EXIT_CODES.API_ERROR);
   }
 }
 

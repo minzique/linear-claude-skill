@@ -18,6 +18,8 @@
  */
 
 import { LinearClient } from '@linear/sdk';
+import { EXIT_CODES } from './lib/exit-codes.js';
+import { getLinearClient, findProjectByName as findProjectByNameBase, ProjectInfo } from './lib/linear-utils.js';
 
 interface ProjectStatus {
   id: string;
@@ -108,66 +110,97 @@ async function findProjectByName(
   client: LinearClient,
   searchName: string
 ): Promise<Project | null> {
-  // Search for projects matching the name
-  const projects = await client.projects({
-    filter: {
-      name: { containsIgnoreCase: searchName },
-    },
-    first: 10,
-  });
+  // Use shared utility for case-insensitive lookup with exact match preference
+  const projectInfo = await findProjectByNameBase(client, searchName);
 
-  if (projects.nodes.length === 0) {
+  if (!projectInfo) {
     return null;
   }
 
-  // If multiple matches, prefer exact match
-  const exactMatch = projects.nodes.find(
-    (p) => p.name.toLowerCase() === searchName.toLowerCase()
+  // Fetch full project details with issues
+  return fetchProjectDetails(client, projectInfo.id);
+}
+
+async function fetchProjectDetailsOptimized(
+  client: LinearClient,
+  projectId: string
+): Promise<Project> {
+  // Single GraphQL query to fetch project + status + issues with states
+  const result = await client.client.rawRequest<{
+    project: {
+      id: string;
+      name: string;
+      slugId: string;
+      status: { id: string; name: string; type: string } | null;
+      issues: {
+        nodes: Array<{
+          identifier: string;
+          title: string;
+          state: { name: string; type: string } | null;
+        }>;
+      };
+    };
+  }>(
+    `
+    query GetProjectDetails($projectId: String!) {
+      project(id: $projectId) {
+        id
+        name
+        slugId
+        status {
+          id
+          name
+          type
+        }
+        issues {
+          nodes {
+            identifier
+            title
+            state {
+              name
+              type
+            }
+          }
+        }
+      }
+    }
+  `,
+    { projectId }
   );
 
-  if (exactMatch) {
-    // Fetch full project with issues
-    return fetchProjectDetails(client, exactMatch.id);
+  const project = result.data?.project;
+  if (!project) {
+    throw new Error(`Project not found: ${projectId}`);
   }
 
-  // Return first match if no exact match
-  return fetchProjectDetails(client, projects.nodes[0].id);
+  return {
+    id: project.id,
+    name: project.name,
+    slugId: project.slugId,
+    status: project.status
+      ? {
+          id: project.status.id,
+          name: project.status.name,
+          type: project.status.type,
+        }
+      : null,
+    issues: {
+      nodes: project.issues.nodes.map((issue) => ({
+        identifier: issue.identifier,
+        title: issue.title,
+        state: issue.state
+          ? { name: issue.state.name, type: issue.state.type }
+          : { name: 'Unknown', type: 'unknown' },
+      })),
+    },
+  };
 }
 
 async function fetchProjectDetails(
   client: LinearClient,
   projectId: string
 ): Promise<Project> {
-  const project = await client.project(projectId);
-  const issues = await project.issues();
-  const status = await project.status;
-
-  return {
-    id: project.id,
-    name: project.name,
-    slugId: project.slugId,
-    status: status
-      ? {
-          id: status.id,
-          name: status.name,
-          type: status.type,
-        }
-      : null,
-    issues: {
-      nodes: await Promise.all(
-        issues.nodes.map(async (issue) => {
-          const state = await issue.state;
-          return {
-            identifier: issue.identifier,
-            title: issue.title,
-            state: state
-              ? { name: state.name, type: state.type }
-              : { name: 'Unknown', type: 'unknown' },
-          };
-        })
-      ),
-    },
-  };
+  return fetchProjectDetailsOptimized(client, projectId);
 }
 
 async function getCompletedStatus(
@@ -309,23 +342,22 @@ _Completed on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month:
 }
 
 async function main(): Promise<void> {
-  const apiKey = process.env.LINEAR_API_KEY;
-
-  if (!apiKey) {
-    console.error('Error: LINEAR_API_KEY environment variable is required');
-    printUsage();
-    process.exit(1);
-  }
-
   const options = parseArgs();
 
   if (!options.projectName) {
     console.error('Error: Project name is required');
     printUsage();
-    process.exit(1);
+    process.exit(EXIT_CODES.INVALID_ARGUMENTS);
   }
 
-  const client = new LinearClient({ apiKey });
+  let client: LinearClient;
+  try {
+    client = getLinearClient();
+  } catch (error) {
+    console.error(`Error: ${(error as Error).message}`);
+    printUsage();
+    process.exit(EXIT_CODES.MISSING_API_KEY);
+  }
 
   console.log(`\nSearching for project: "${options.projectName}"...`);
 
@@ -335,7 +367,7 @@ async function main(): Promise<void> {
   if (!project) {
     console.error(`\nError: No project found matching "${options.projectName}"`);
     console.error('\nTip: Use partial name matching, e.g., "Phase 1" instead of full name');
-    process.exit(1);
+    process.exit(EXIT_CODES.RESOURCE_NOT_FOUND);
   }
 
   console.log(`\nFound project: ${project.name}`);
@@ -366,7 +398,7 @@ async function main(): Promise<void> {
         `\nError: ${incompleteIssues.length} issues are not completed.`
       );
       console.error('Use --force to complete anyway, or finish the issues first.');
-      process.exit(1);
+      process.exit(EXIT_CODES.VALIDATION_ERROR);
     }
 
     console.log('\n  --force flag set, continuing with incomplete issues...');
@@ -377,7 +409,7 @@ async function main(): Promise<void> {
 
   if (!completedStatus) {
     console.error('\nError: Could not find "Completed" status in workspace');
-    process.exit(1);
+    process.exit(EXIT_CODES.RESOURCE_NOT_FOUND);
   }
 
   console.log(`\nCompleted status ID: ${completedStatus.id}`);
@@ -408,7 +440,7 @@ async function main(): Promise<void> {
 
   if (!statusUpdated) {
     console.error('Error: Failed to update project status');
-    process.exit(1);
+    process.exit(EXIT_CODES.API_ERROR);
   }
   console.log('  Status updated successfully');
 
@@ -443,5 +475,5 @@ main().catch((error) => {
   if (error.errors) {
     console.error('GraphQL Errors:', JSON.stringify(error.errors, null, 2));
   }
-  process.exit(1);
+  process.exit(EXIT_CODES.API_ERROR);
 });
