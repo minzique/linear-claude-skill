@@ -19,7 +19,7 @@
 
 import { LinearClient } from '@linear/sdk';
 import { EXIT_CODES } from './lib/exit-codes.js';
-import { getLinearClient, findProjectByName as findProjectByNameBase, ProjectInfo } from './lib/linear-utils.js';
+import { getLinearClient, findProjectByName as findProjectByNameBase } from './lib/linear-utils.js';
 
 interface ProjectStatus {
   id: string;

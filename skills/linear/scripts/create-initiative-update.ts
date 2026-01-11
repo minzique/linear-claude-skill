@@ -26,7 +26,6 @@ import {
   isValidHealth,
   getLinearClient,
   findInitiativeByName,
-  InitiativeInfo,
 } from './lib/linear-utils.js';
 
 function printUsage(): void {
