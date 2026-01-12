@@ -314,6 +314,70 @@ const commands: Record<string, (...args: string[]) => Promise<void>> = {
     console.log(`  Initiative: ${initiative.name}`);
   },
 
+  async 'unlink-initiative'(projectName: string, initiativeName: string) {
+    if (!projectName || !initiativeName) {
+      console.error('Usage: unlink-initiative <project-name> <initiative-name>');
+      console.error('Example: unlink-initiative "Phase 8: MCP Decision Engine" "Linear Skill"');
+      process.exit(1);
+    }
+
+    console.log(`Unlinking project from initiative...`);
+
+    // Find project by name
+    const projects = await client.projects({
+      filter: { name: { containsIgnoreCase: projectName } }
+    });
+
+    if (projects.nodes.length === 0) {
+      console.error(`[ERROR] Project "${projectName}" not found`);
+      process.exit(1);
+    }
+
+    const project = projects.nodes[0];
+    console.log(`  Found project: ${project.name}`);
+
+    // Find initiative by name
+    const initiatives = await client.initiatives({
+      filter: { name: { containsIgnoreCase: initiativeName } }
+    });
+
+    if (initiatives.nodes.length === 0) {
+      console.error(`[ERROR] Initiative "${initiativeName}" not found`);
+      process.exit(1);
+    }
+
+    const initiative = initiatives.nodes[0];
+    console.log(`  Found initiative: ${initiative.name}`);
+
+    // Find the initiative-to-project link by querying initiativeToProjects
+    // Note: Linear SDK filter doesn't support nested entity filters well,
+    // so we fetch all links for the initiative and filter client-side
+    const allLinks = await (client as any).initiativeToProjects({
+      filter: {
+        initiativeId: { eq: initiative.id }
+      }
+    });
+
+    // Find the specific link for our project
+    const matchingLinks = (allLinks.nodes || []).filter(
+      (l: any) => l.projectId === project.id
+    );
+
+    if (matchingLinks.length === 0) {
+      console.error(`[ERROR] Project "${project.name}" is not linked to initiative "${initiative.name}"`);
+      process.exit(1);
+    }
+
+    const link = matchingLinks[0];
+
+    // Delete the initiative-to-project link
+    await (client as any).deleteInitiativeToProject(link.id);
+
+    console.log(`\n[SUCCESS] Project unlinked from initiative!`);
+    console.log(`  Project: ${project.name}`);
+    console.log(`  Initiative: ${initiative.name}`);
+  },
+
   async 'create-project-update'(projectName: string, body: string, healthFlag?: string) {
     if (!projectName || !body) {
       console.error('Usage: create-project-update <project-name> <body> [--health onTrack|atRisk|offTrack]');
@@ -956,6 +1020,9 @@ Commands:
 
   link-initiative <project-name> <initiative-name>
     Link an existing project to an initiative
+
+  unlink-initiative <project-name> <initiative-name>
+    Remove a project from an initiative
 
   create-project-update <project-name> <body> [--health onTrack|atRisk|offTrack]
     Create a project update with markdown body
