@@ -155,6 +155,54 @@ npx tsx scripts/setup.ts
 
 ---
 
+## Project Planning Workflow
+
+### Create Issues in the Correct Project from the Start
+
+**Best Practice**: When planning a new phase or initiative, create the project and its issues together in a single planning session. Avoid creating issues in a catch-all project and moving them later.
+
+#### Recommended Workflow
+
+1. **Create the project first**:
+   ```bash
+   npx tsx scripts/linear-ops.ts create-project "Phase X: Feature Name" "Skillsmith"
+   ```
+
+2. **Set project state to Planned**:
+   ```bash
+   npx tsx scripts/linear-ops.ts project-status "Phase X: Feature Name" planned
+   ```
+
+3. **Create issues directly in the project**:
+   ```bash
+   npx tsx scripts/linear-ops.ts create-issue "Phase X: Feature Name" "Parent task" "Description"
+   npx tsx scripts/linear-ops.ts create-sub-issue SMI-XXX "Sub-task 1" "Description"
+   npx tsx scripts/linear-ops.ts create-sub-issue SMI-XXX "Sub-task 2" "Description"
+   ```
+
+4. **Update project state when work begins**:
+   ```bash
+   npx tsx scripts/linear-ops.ts project-status "Phase X: Feature Name" in-progress
+   ```
+
+#### Why This Matters
+
+- **Traceability**: Issues are linked to their project from creation
+- **Metrics**: Project progress tracking is accurate from day one
+- **Workflow**: No time wasted moving issues between projects
+- **Organization**: Linear views and filters work correctly
+
+#### Anti-Pattern to Avoid
+
+❌ Creating issues in a "holding" project and moving them later:
+```bash
+# Don't do this
+create-issue "Phase 6A" "New feature"  # Wrong project
+# Later: manually move to Phase X      # Extra work
+```
+
+---
+
 ## Tool Selection
 
 Choose the right tool for the task:

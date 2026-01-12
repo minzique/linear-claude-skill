@@ -213,6 +213,107 @@ const commands: Record<string, (...args: string[]) => Promise<void>> = {
     }
   },
 
+  async 'project-status'(projectName: string, state: string) {
+    if (!projectName || !state) {
+      console.error('Usage: project-status <project-name> <state>');
+      console.error('States: backlog, planned, in-progress, paused, completed, canceled');
+      console.error('Example: project-status "Phase 8: MCP Decision Engine" completed');
+      process.exit(1);
+    }
+
+    // Map user-friendly names to API values (Linear UI shows "In Progress" but API uses "started")
+    const stateMap: Record<string, string> = {
+      'backlog': 'backlog',
+      'planned': 'planned',
+      'in-progress': 'started',
+      'inprogress': 'started',
+      'started': 'started',  // Accept legacy value for backwards compatibility
+      'paused': 'paused',
+      'completed': 'completed',
+      'canceled': 'canceled'
+    };
+
+    const normalizedInput = state.toLowerCase().replace(/\s+/g, '-');
+    const apiState = stateMap[normalizedInput];
+
+    if (!apiState) {
+      console.error(`[ERROR] Invalid state: ${state}`);
+      console.error('Valid states: backlog, planned, in-progress, paused, completed, canceled');
+      process.exit(1);
+    }
+
+    const displayState = normalizedInput === 'started' ? 'in-progress' : normalizedInput;
+    console.log(`Updating project status: ${projectName} -> ${displayState}...`);
+
+    // Find project by name
+    const projects = await client.projects({
+      filter: { name: { containsIgnoreCase: projectName } }
+    });
+
+    if (projects.nodes.length === 0) {
+      console.error(`[ERROR] Project "${projectName}" not found`);
+      process.exit(1);
+    }
+
+    const project = projects.nodes[0];
+    console.log(`  Found project: ${project.name}`);
+    console.log(`  Current state: ${project.state}`);
+
+    // Update project state using the SDK's updateProject method
+    await (client as any).updateProject(project.id, {
+      state: apiState
+    });
+
+    console.log(`\n[SUCCESS] Project state updated!`);
+    console.log(`  ${project.name}: ${project.state} -> ${displayState}`);
+  },
+
+  async 'link-initiative'(projectName: string, initiativeName: string) {
+    if (!projectName || !initiativeName) {
+      console.error('Usage: link-initiative <project-name> <initiative-name>');
+      console.error('Example: link-initiative "Phase 8: MCP Decision Engine" "Skillsmith"');
+      process.exit(1);
+    }
+
+    console.log(`Linking project to initiative...`);
+
+    // Find project by name
+    const projects = await client.projects({
+      filter: { name: { containsIgnoreCase: projectName } }
+    });
+
+    if (projects.nodes.length === 0) {
+      console.error(`[ERROR] Project "${projectName}" not found`);
+      process.exit(1);
+    }
+
+    const project = projects.nodes[0];
+    console.log(`  Found project: ${project.name}`);
+
+    // Find initiative by name
+    const initiatives = await client.initiatives({
+      filter: { name: { containsIgnoreCase: initiativeName } }
+    });
+
+    if (initiatives.nodes.length === 0) {
+      console.error(`[ERROR] Initiative "${initiativeName}" not found`);
+      process.exit(1);
+    }
+
+    const initiative = initiatives.nodes[0];
+    console.log(`  Found initiative: ${initiative.name}`);
+
+    // Link project to initiative using createInitiativeToProject
+    await (client as any).createInitiativeToProject({
+      projectId: project.id,
+      initiativeId: initiative.id
+    });
+
+    console.log(`\n[SUCCESS] Project linked to initiative!`);
+    console.log(`  Project: ${project.name}`);
+    console.log(`  Initiative: ${initiative.name}`);
+  },
+
   async 'create-project-update'(projectName: string, body: string, healthFlag?: string) {
     if (!projectName || !body) {
       console.error('Usage: create-project-update <project-name> <body> [--health onTrack|atRisk|offTrack]');
@@ -848,6 +949,13 @@ Commands:
 
   create-project <name> [initiative-name]
     Create a project, optionally linked to an initiative
+
+  project-status <project-name> <state>
+    Update project state
+    States: backlog, planned, in-progress, paused, completed, canceled
+
+  link-initiative <project-name> <initiative-name>
+    Link an existing project to an initiative
 
   create-project-update <project-name> <body> [--health onTrack|atRisk|offTrack]
     Create a project update with markdown body
