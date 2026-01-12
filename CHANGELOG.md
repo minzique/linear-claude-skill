@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-01-11
+
+### Added
+- **Project State Management** - New `project-status` command for updating project states
+  - Supports all Linear project states: backlog, planned, in-progress, paused, completed, canceled
+  - Uses user-friendly terminology (`in-progress`) that maps to Linear API values (`started`)
+  - Partial project name matching for convenience
+
+- **Initiative Linking** - New commands for managing project-initiative relationships
+  - `link-initiative` - Connect a project to an initiative
+  - `unlink-initiative` - Remove a project from an initiative
+  - Both support partial name matching for projects and initiatives
+
+- **Project Planning Workflow** - New documentation section with best practices
+  - Complete project lifecycle example from creation to completion
+  - Anti-pattern guidance to avoid common mistakes
+  - Step-by-step workflow for creating issues in the correct project
+
+### Improved
+- **Documentation** - Comprehensive command reference with examples
+  - Valid states table showing input → API value mapping
+  - Error handling notes for each command
+  - Real-world examples from Skillsmith phases 8-10
+
+---
+
 ## [1.5.0] - 2025-12-28
 
 ### Changed
