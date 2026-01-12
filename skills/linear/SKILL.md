@@ -133,6 +133,14 @@ npx tsx scripts/linear-ops.ts create-initiative "Q1 Goals" "Key initiatives for 
 # Create a project linked to an initiative
 npx tsx scripts/linear-ops.ts create-project "Phase 1" "Q1 Goals"
 
+# Update project state (backlog, planned, in-progress, paused, completed, canceled)
+npx tsx scripts/linear-ops.ts project-status "Phase 1" in-progress
+npx tsx scripts/linear-ops.ts project-status "Phase 1" completed
+
+# Link/unlink projects to initiatives
+npx tsx scripts/linear-ops.ts link-initiative "Phase 1" "Q1 Goals"
+npx tsx scripts/linear-ops.ts unlink-initiative "Phase 1" "Q1 Goals"
+
 # Update issue status (PREFERRED over MCP)
 node scripts/linear-helpers.mjs update-status Done 123 124 125
 
@@ -199,6 +207,104 @@ npx tsx scripts/setup.ts
 # Don't do this
 create-issue "Phase 6A" "New feature"  # Wrong project
 # Later: manually move to Phase X      # Extra work
+```
+
+---
+
+## Project Management Commands
+
+### project-status
+
+Update a project's state in Linear. Accepts user-friendly terminology that maps to Linear's API.
+
+```bash
+npx tsx scripts/linear-ops.ts project-status <project-name> <state>
+```
+
+**Valid States:**
+| Input | Description | API Value |
+|-------|-------------|-----------|
+| `backlog` | Not yet started | backlog |
+| `planned` | Scheduled for future | planned |
+| `in-progress` | Currently active | started |
+| `paused` | Temporarily on hold | paused |
+| `completed` | Successfully finished | completed |
+| `canceled` | Will not be done | canceled |
+
+**Examples:**
+```bash
+# Start working on a project
+npx tsx scripts/linear-ops.ts project-status "Phase 8: MCP Decision Engine" in-progress
+
+# Mark project complete
+npx tsx scripts/linear-ops.ts project-status "Phase 8" completed
+
+# Partial name matching works
+npx tsx scripts/linear-ops.ts project-status "Phase 8" paused
+```
+
+### link-initiative
+
+Link an existing project to an initiative.
+
+```bash
+npx tsx scripts/linear-ops.ts link-initiative <project-name> <initiative-name>
+```
+
+**Examples:**
+```bash
+# Link Phase 8 to Skillsmith initiative
+npx tsx scripts/linear-ops.ts link-initiative "Phase 8: MCP Decision Engine" "Skillsmith"
+
+# Partial matching works
+npx tsx scripts/linear-ops.ts link-initiative "Phase 8" "Skillsmith"
+```
+
+### unlink-initiative
+
+Remove a project from an initiative.
+
+```bash
+npx tsx scripts/linear-ops.ts unlink-initiative <project-name> <initiative-name>
+```
+
+**Examples:**
+```bash
+# Remove incorrect link
+npx tsx scripts/linear-ops.ts unlink-initiative "Phase 8" "Linear Skill"
+
+# Clean up test links
+npx tsx scripts/linear-ops.ts unlink-initiative "Test Project" "Q1 Goals"
+```
+
+**Error Handling:**
+- Returns error if project is not linked to the specified initiative
+- Returns error if project or initiative not found
+
+### Complete Project Lifecycle Example
+
+```bash
+# 1. Create project linked to initiative
+npx tsx scripts/linear-ops.ts create-project "Phase 11: New Feature" "Skillsmith"
+
+# 2. Set state to planned
+npx tsx scripts/linear-ops.ts project-status "Phase 11" planned
+
+# 3. Create issues in the project
+npx tsx scripts/linear-ops.ts create-issue "Phase 11" "Parent task" "Description"
+npx tsx scripts/linear-ops.ts create-sub-issue SMI-XXX "Sub-task 1" "Details"
+
+# 4. Start work - update to in-progress
+npx tsx scripts/linear-ops.ts project-status "Phase 11" in-progress
+
+# 5. Mark issues done
+npx tsx scripts/linear-ops.ts status Done SMI-XXX SMI-YYY
+
+# 6. Complete project
+npx tsx scripts/linear-ops.ts project-status "Phase 11" completed
+
+# 7. (Optional) Link to additional initiative
+npx tsx scripts/linear-ops.ts link-initiative "Phase 11" "Q2 Goals"
 ```
 
 ---
