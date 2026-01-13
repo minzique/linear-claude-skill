@@ -47,12 +47,7 @@ const LABEL_COLORS: Record<string, string> = {
   integration: '#7057FF',
   performance: '#FBCA04',
   reporting: '#D93F0B',
-  documentation: '#0075CA',
-
-  // Phases
-  'phase-5': '#8B5CF6',
-  'phase-6': '#EC4899',
-  'phase-7': '#F59E0B'
+  documentation: '#0075CA'
 }
 
 /**

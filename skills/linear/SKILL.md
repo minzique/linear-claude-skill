@@ -119,13 +119,13 @@ Use the high-level operations script for simple commands:
 npx tsx scripts/linear-ops.ts create-issue "My Project" "Fix login bug" "Users cannot log in" --priority 2
 
 # Create a sub-issue under an existing issue
-npx tsx scripts/linear-ops.ts create-sub-issue SMI-100 "Add unit tests" "Unit tests for this feature" --priority 2
+npx tsx scripts/linear-ops.ts create-sub-issue ENG-100 "Add unit tests" "Unit tests for this feature" --priority 2
 
 # Set parent-child relationships for existing issues
-npx tsx scripts/linear-ops.ts set-parent SMI-100 SMI-101 SMI-102
+npx tsx scripts/linear-ops.ts set-parent ENG-100 ENG-101 ENG-102
 
 # List sub-issues of a parent
-npx tsx scripts/linear-ops.ts list-sub-issues SMI-100
+npx tsx scripts/linear-ops.ts list-sub-issues ENG-100
 
 # Create an initiative
 npx tsx scripts/linear-ops.ts create-initiative "Q1 Goals" "Key initiatives for Q1"
@@ -937,9 +937,9 @@ Linear supports hierarchical issue organization through parent-child relationshi
 
 | Scenario | Use Sub-Issues | Example |
 |----------|----------------|---------|
-| Feature breakdown | ✅ Yes | SMI-100 "Auth System" → SMI-101 "TDD tests", SMI-102 "E2E tests" |
+| Feature breakdown | ✅ Yes | ENG-100 "Auth System" → ENG-101 "TDD tests", ENG-102 "E2E tests" |
 | Related but independent | ❌ No | Two bugs in different areas (use labels instead) |
-| Sequential phases | ✅ Yes | SMI-200 "Phase 1" → SMI-201 "Setup", SMI-202 "Implementation" |
+| Sequential phases | ✅ Yes | ENG-200 "Phase 1" → ENG-201 "Setup", ENG-202 "Implementation" |
 | Tracking subtasks | ✅ Yes | Break down a large issue into trackable pieces |
 
 ### Commands

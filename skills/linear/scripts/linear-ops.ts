@@ -572,7 +572,7 @@ const commands: Record<string, (...args: string[]) => Promise<void>> = {
     if (!state || issueNumbers.length === 0) {
       console.error('Usage: status <state> <issue-numbers...>');
       console.error('Example: status Done 123 124 125');
-      console.error('Example: status Done SMI-123 SMI-124  (prefix is stripped automatically)');
+      console.error('Example: status Done ENG-123 ENG-124  (prefix is stripped automatically)');
       console.error('\nAvailable states: Backlog, Todo, In Progress, In Review, Done, Canceled');
       process.exit(1);
     }
@@ -612,7 +612,7 @@ const commands: Record<string, (...args: string[]) => Promise<void>> = {
     let failed = 0;
 
     for (const num of issueNumbers) {
-      // Strip prefix if present (e.g., "SMI-123" -> "123", "ENG-456" -> "456")
+      // Strip prefix if present (e.g., "ENG-123" -> "123", "ENG-456" -> "456")
       const cleanedNum = num.replace(/^[A-Z]+-/i, '');
       const issueNum = parseInt(cleanedNum, 10);
       if (isNaN(issueNum)) {
@@ -743,7 +743,7 @@ const commands: Record<string, (...args: string[]) => Promise<void>> = {
     if (issueNumbers.length === 0) {
       console.error('Usage: done <issue-numbers...>');
       console.error('Example: done 123 124 125');
-      console.error('Example: done SMI-123 SMI-124  (prefix is stripped automatically)');
+      console.error('Example: done ENG-123 ENG-124  (prefix is stripped automatically)');
       console.error('\nThis is a shortcut for: status Done <issue-numbers...>');
       process.exit(1);
     }
@@ -755,7 +755,7 @@ const commands: Record<string, (...args: string[]) => Promise<void>> = {
     if (issueNumbers.length === 0) {
       console.error('Usage: wip <issue-numbers...>');
       console.error('Example: wip 123 124 125');
-      console.error('Example: wip SMI-123 SMI-124  (prefix is stripped automatically)');
+      console.error('Example: wip ENG-123 ENG-124  (prefix is stripped automatically)');
       console.error('\nThis is a shortcut for: status "In Progress" <issue-numbers...>');
       process.exit(1);
     }
@@ -766,7 +766,7 @@ const commands: Record<string, (...args: string[]) => Promise<void>> = {
   async 'set-parent'(parentIssue: string, ...childIssues: string[]) {
     if (!parentIssue || childIssues.length === 0) {
       console.error('Usage: set-parent <parent-issue> <child-issues...>');
-      console.error('Example: set-parent SMI-100 SMI-101 SMI-102');
+      console.error('Example: set-parent ENG-100 ENG-101 ENG-102');
       console.error('Example: set-parent 100 101 102  (prefix optional)');
       console.error('\nSets the first issue as parent of all subsequent issues (sub-issues).');
       process.exit(1);
@@ -836,7 +836,7 @@ const commands: Record<string, (...args: string[]) => Promise<void>> = {
   async 'create-sub-issue'(parentIssue: string, title: string, description?: string, ...flags: string[]) {
     if (!parentIssue || !title) {
       console.error('Usage: create-sub-issue <parent-issue> <title> [description] [--priority 1-4] [--labels label1,label2]');
-      console.error('Example: create-sub-issue SMI-100 "Implement feature" "Detailed description"');
+      console.error('Example: create-sub-issue ENG-100 "Implement feature" "Detailed description"');
       console.error('Example: create-sub-issue 100 "Add tests" --priority 2');
       console.error('\nCreates a new issue as a child of the specified parent issue.');
       process.exit(1);
@@ -936,7 +936,7 @@ const commands: Record<string, (...args: string[]) => Promise<void>> = {
   async 'list-sub-issues'(parentIssue: string) {
     if (!parentIssue) {
       console.error('Usage: list-sub-issues <parent-issue>');
-      console.error('Example: list-sub-issues SMI-100');
+      console.error('Example: list-sub-issues ENG-100');
       console.error('Example: list-sub-issues 100');
       console.error('\nLists all sub-issues (children) of the specified parent issue.');
       process.exit(1);
@@ -997,16 +997,16 @@ Commands:
   create-sub-issue <parent-issue> <title> [description] [--priority 1-4] [--labels label1,label2]
     Create a new issue as a child of an existing issue
     Inherits team and project from parent issue
-    Example: create-sub-issue SMI-100 "Add unit tests"
+    Example: create-sub-issue ENG-100 "Add unit tests"
 
   set-parent <parent-issue> <child-issues...>
     Set parent-child relationships between existing issues
     Useful for organizing issues into hierarchies
-    Example: set-parent SMI-100 SMI-101 SMI-102
+    Example: set-parent ENG-100 ENG-101 ENG-102
 
   list-sub-issues <parent-issue>
     List all sub-issues (children) of a parent issue
-    Example: list-sub-issues SMI-100
+    Example: list-sub-issues ENG-100
 
   create-initiative <name> [description]
     Create a new initiative
@@ -1036,16 +1036,16 @@ Commands:
 
   status <state> <issue-numbers...>
     Update issue status (e.g., status Done 123 124 125)
-    Accepts both formats: 123 or SMI-123 (prefix stripped automatically)
+    Accepts both formats: 123 or ENG-123 (prefix stripped automatically)
     States: Backlog, Todo, In Progress, In Review, Done, Canceled
 
   done <issue-numbers...>
     Shortcut for: status Done <issue-numbers...>
-    Example: done SMI-123 SMI-124
+    Example: done ENG-123 ENG-124
 
   wip <issue-numbers...>
     Shortcut for: status "In Progress" <issue-numbers...>
-    Example: wip SMI-123
+    Example: wip ENG-123
 
   list-initiatives
     List all initiatives in the workspace
@@ -1073,8 +1073,8 @@ Examples:
   npx tsx linear-ops.ts create-initiative-update "My Initiative" "## Phase Complete"
   npx tsx linear-ops.ts add-link "Phase 6A" "https://github.com/org/repo/docs/plan.md" "Implementation Plan"
   npx tsx linear-ops.ts status Done 123 124 125
-  npx tsx linear-ops.ts done SMI-123 SMI-124
-  npx tsx linear-ops.ts wip SMI-125
+  npx tsx linear-ops.ts done ENG-123 ENG-124
+  npx tsx linear-ops.ts wip ENG-125
   npx tsx linear-ops.ts list-initiatives
 `);
   }

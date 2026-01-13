@@ -1,6 +1,6 @@
 #!/usr/bin/env npx tsx
 
-/**
+#!/**
  * Phase Completion Workflow
  *
  * Automates the complete phase/project completion process:
