@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.1] - 2026-01-12
+
+### Removed
+- **8 obsolete scripts** - Cleaned up one-off phase-specific scripts (3,006 lines removed)
+  - `create-phase5-issues.ts`, `create-phase6-issues.ts` - Phase-specific issue creation
+  - `create-next-steps.ts` - Phase 2i/2j planning script
+  - `update-phase7-deps.ts` - One-off dependency fix
+  - `fix-skillsmith-structure.ts`, `fix-skillsmith-structure-v2.ts` - Structure fixes
+  - `update-status.ts` - Redundant with `sync.ts`
+  - `verify-linear-structure.ts` - Hardcoded debugging script
+
+### Changed
+- **Generalized for public use** - Removed project-specific references
+  - Changed `SMI-` examples to generic `ENG-` in documentation and scripts
+  - Removed `phase-5`, `phase-6`, `phase-7` label colors from `lib/labels.ts`
+  - Examples now use generic team prefixes for broader applicability
+
+### Retained Scripts (10 + 7 lib files)
+- Core CLI: `linear-ops.ts`, `linear-api.mjs`, `query.ts`, `query.sh`
+- Utilities: `setup.ts`, `sync.ts`, `phase-complete.ts`
+- Updates: `create-initiative-update.ts`, `create-project-update.ts`, `create-issue-with-project.ts`
+- Lib: All shared utilities retained
+
+---
+
 ## [1.6.0] - 2026-01-11
 
 ### Added
