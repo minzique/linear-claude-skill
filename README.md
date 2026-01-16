@@ -4,6 +4,7 @@ A comprehensive [Claude Code](https://claude.ai/code) skill for managing Linear 
 
 ## Features
 
+- **Label Taxonomy System** — Domain-based labels for consistent categorization and agent routing
 - **First-Time Setup Check** — Automatic configuration validation with actionable guidance
 - **High-Level Operations** — Simple commands for initiatives, projects, and status updates
 - **Sub-Issue Management** — Create and manage parent-child issue relationships
@@ -127,11 +128,14 @@ skills/linear/
 ├── api.md            # GraphQL API reference
 ├── sdk.md            # SDK automation patterns
 ├── sync.md           # Bulk sync patterns
+├── docs/
+│   └── labels.md     # Label taxonomy documentation
 ├── scripts/
-│   ├── linear-ops.ts # High-level operations (issues, projects, sub-issues)
+│   ├── linear-ops.ts # High-level operations (issues, projects, labels)
 │   ├── query.ts      # GraphQL query runner
 │   ├── setup.ts      # Configuration checker
-│   └── sync.ts       # Bulk sync CLI tool
+│   ├── sync.ts       # Bulk sync CLI tool
+│   └── lib/          # Shared utilities (taxonomy, labels, verification)
 └── hooks/
     └── post-edit.sh  # Auto-sync hook
 ```
@@ -222,6 +226,31 @@ npx tsx scripts/linear-ops.ts list-sub-issues <parent>
 - Breaking down features into trackable subtasks
 - Organizing TDD/E2E test issues under a feature issue
 - Sequential phases within a larger initiative
+
+### Label Taxonomy
+
+A standardized label system for consistent issue categorization across projects:
+
+```bash
+# Show full taxonomy (25 labels across 3 categories)
+npx tsx scripts/linear-ops.ts labels taxonomy
+
+# Validate label combinations
+npx tsx scripts/linear-ops.ts labels validate "feature,security,breaking-change"
+
+# Suggest labels based on issue title
+npx tsx scripts/linear-ops.ts labels suggest "Fix XSS vulnerability in login form"
+
+# Show agent recommendations for labels
+npx tsx scripts/linear-ops.ts labels agents "security,performance"
+```
+
+**Label Categories:**
+- **Type** (exactly one required): `feature`, `bug`, `refactor`, `chore`, `spike`
+- **Domain** (1-2 recommended): `security`, `backend`, `frontend`, `testing`, `infrastructure`, `mcp`, `cli`, etc.
+- **Scope** (0-2 optional): `blocked`, `breaking-change`, `tech-debt`, `needs-split`, `good-first-issue`
+
+See `skills/linear/docs/labels.md` for the complete taxonomy guide.
 
 ### Resource Links
 
