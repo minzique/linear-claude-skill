@@ -17,3 +17,6 @@ node_modules/
 
 # Internal feature plans
 /docs/features/
+
+# Claude Code configuration (user-specific)
+CLAUDE.md
