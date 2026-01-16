@@ -532,13 +532,35 @@ await linear.list_issues({ team: "TEAM", state: "Backlog" })
 
 ### Labels
 
+This skill uses a **domain-based label taxonomy** for consistent categorization. See [docs/labels.md](docs/labels.md) for the complete guide.
+
+**Key rules:**
+- Always apply exactly ONE Type label: `feature`, `bug`, `refactor`, `chore`, or `spike`
+- Apply 1-2 Domain labels for agent routing: `security`, `backend`, `frontend`, etc.
+- Add Scope labels only when applicable: `blocked`, `breaking-change`, `tech-debt`, etc.
+
+**Taxonomy commands:**
+```bash
+# Show full taxonomy
+npx tsx scripts/linear-ops.ts labels taxonomy
+
+# Validate labels before creating issues
+npx tsx scripts/linear-ops.ts labels validate "feature,security,breaking-change"
+
+# Suggest labels based on issue title
+npx tsx scripts/linear-ops.ts labels suggest "Fix XSS vulnerability in login form"
+
+# Show agent recommendations for labels
+npx tsx scripts/linear-ops.ts labels agents "security,performance"
+```
+
 You can use label names directly in `create_issue` and `update_issue` - no need to look up IDs:
 
 ```typescript
 await linear.create_issue({
   team: "TEAM",
   title: "Update documentation",
-  labels: ["documentation", "high-priority"]
+  labels: ["documentation", "chore"]  // Use taxonomy labels
 })
 ```
 

@@ -26,8 +26,60 @@ export {
   ensureLabelsExist,
   applyLabelsToIssue,
   verifyLabelsApplied,
-  extractUniqueLabels
+  extractUniqueLabels,
+  type EnsureLabelsOptions,
+  type EnsureLabelsResult
 } from './labels'
+
+// Label taxonomy utilities
+export {
+  // Types
+  type LabelCategory,
+  type DomainLabel,
+  type TypeLabel,
+  type ScopeLabel,
+  type TaxonomyLabel,
+  type AgentId,
+  type LabelDefinition,
+  type LabelTaxonomy,
+  type ValidationResult,
+  type LabelSuggestion,
+  type AgentSelection
+} from './taxonomy'
+
+export {
+  LABEL_TAXONOMY,
+  getAllLabels,
+  getAllLabelNames,
+  getLabelByName,
+  isValidLabel,
+  getLabelsByCategory,
+  getLabelColor,
+  DOMAIN_LABEL_NAMES,
+  TYPE_LABEL_NAMES,
+  SCOPE_LABEL_NAMES
+} from './taxonomy-data'
+
+export {
+  validateLabels,
+  suggestLabels,
+  getLabelCategory,
+  hasValidTypeLabel,
+  hasDomainLabel,
+  filterToTaxonomy,
+  formatValidationResult,
+  formatSuggestions
+} from './taxonomy-validation'
+
+export {
+  selectAgentsForIssue,
+  getLabelsForAgent,
+  canAgentHandle,
+  buildAgentDomainMatrix,
+  formatAgentSelection,
+  formatAgentMatrix,
+  AGENT_DESCRIPTIONS
+} from './agent-selection'
 
 // Verification utilities
 export {

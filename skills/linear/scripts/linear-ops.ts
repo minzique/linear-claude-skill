@@ -25,6 +25,18 @@
  */
 
 import { LinearClient, Initiative, Project } from '@linear/sdk';
+import {
+  LABEL_TAXONOMY,
+  getAllLabels,
+  getLabelsByCategory,
+  validateLabels,
+  suggestLabels,
+  selectAgentsForIssue,
+  formatValidationResult,
+  formatSuggestions,
+  formatAgentSelection,
+  formatAgentMatrix
+} from './lib';
 
 // Validate API key early
 const API_KEY = process.env.LINEAR_API_KEY;
@@ -982,6 +994,124 @@ const commands: Record<string, (...args: string[]) => Promise<void>> = {
     }
   },
 
+  // ==================== LABEL TAXONOMY COMMANDS ====================
+
+  async 'labels'(subcommand: string, ...args: string[]) {
+    if (!subcommand) {
+      console.error('Usage: labels <subcommand> [args]');
+      console.error('Subcommands:');
+      console.error('  taxonomy              Show full label taxonomy');
+      console.error('  validate <labels>     Validate a comma-separated list of labels');
+      console.error('  suggest <title>       Suggest labels based on issue title');
+      console.error('  agents <labels>       Show agent recommendations for labels');
+      process.exit(1);
+    }
+
+    switch (subcommand) {
+      case 'taxonomy':
+        await commands['labels-taxonomy']();
+        break;
+      case 'validate':
+        await commands['labels-validate'](args.join(','));
+        break;
+      case 'suggest':
+        await commands['labels-suggest'](args.join(' '));
+        break;
+      case 'agents':
+        await commands['labels-agents'](args.join(','));
+        break;
+      default:
+        console.error(`Unknown subcommand: ${subcommand}`);
+        console.error('Run "labels" without arguments for usage.');
+        process.exit(1);
+    }
+  },
+
+  async 'labels-taxonomy'() {
+    console.log('=== Label Taxonomy ===\n');
+
+    console.log('TYPE LABELS (exactly one required per issue):');
+    console.log('----------------------------------------------');
+    for (const label of getLabelsByCategory('type')) {
+      console.log(`  ${label.name.padEnd(15)} ${label.color}  ${label.description}`);
+    }
+
+    console.log('\nDOMAIN LABELS (1-2 recommended per issue):');
+    console.log('----------------------------------------------');
+    for (const label of getLabelsByCategory('domain')) {
+      const agents = label.primaryAgents?.join(', ') || 'none';
+      console.log(`  ${label.name.padEnd(15)} ${label.color}  ${label.description}`);
+      console.log(`                    Primary agents: ${agents}`);
+    }
+
+    console.log('\nSCOPE LABELS (0-2 optional per issue):');
+    console.log('----------------------------------------------');
+    for (const label of getLabelsByCategory('scope')) {
+      console.log(`  ${label.name.padEnd(15)} ${label.color}  ${label.description}`);
+    }
+
+    console.log('\n=== Summary ===');
+    console.log(`Total labels: ${getAllLabels().length}`);
+    console.log(`  Type labels:   ${getLabelsByCategory('type').length}`);
+    console.log(`  Domain labels: ${getLabelsByCategory('domain').length}`);
+    console.log(`  Scope labels:  ${getLabelsByCategory('scope').length}`);
+  },
+
+  async 'labels-validate'(labelString: string) {
+    if (!labelString) {
+      console.error('Usage: labels validate <labels>');
+      console.error('Example: labels validate "feature,security,breaking-change"');
+      process.exit(1);
+    }
+
+    const labels = labelString.split(',').map(l => l.trim()).filter(l => l);
+    console.log(`Validating labels: ${labels.join(', ')}\n`);
+
+    const result = validateLabels(labels);
+    console.log(formatValidationResult(result));
+
+    if (!result.valid) {
+      process.exit(1);
+    }
+  },
+
+  async 'labels-suggest'(title: string) {
+    if (!title) {
+      console.error('Usage: labels suggest <title>');
+      console.error('Example: labels suggest "Fix XSS vulnerability in login form"');
+      process.exit(1);
+    }
+
+    console.log(`Analyzing: "${title}"\n`);
+
+    const suggestions = suggestLabels(title);
+    console.log(formatSuggestions(suggestions));
+
+    if (suggestions.length > 0) {
+      const suggestedLabels = suggestions.map(s => s.label);
+      console.log(`\nSuggested label set: ${suggestedLabels.join(', ')}`);
+    }
+  },
+
+  async 'labels-agents'(labelString: string) {
+    if (!labelString) {
+      console.error('Usage: labels agents <labels>');
+      console.error('Example: labels agents "security,performance"');
+      process.exit(1);
+    }
+
+    const labels = labelString.split(',').map(l => l.trim()).filter(l => l);
+    console.log(`Finding agents for labels: ${labels.join(', ')}\n`);
+
+    const selection = selectAgentsForIssue(labels);
+    console.log(formatAgentSelection(selection));
+  },
+
+  async 'labels-matrix'() {
+    console.log('=== Agent-Domain Matrix ===\n');
+    console.log(formatAgentMatrix());
+  },
+
   async 'help'() {
     console.log(`
 Linear High-Level Operations
@@ -1059,6 +1189,13 @@ Commands:
   setup
     Check Linear skill setup and configuration
 
+  labels <subcommand> [args]
+    Label taxonomy commands:
+    - labels taxonomy           Show full label taxonomy
+    - labels validate <labels>  Validate comma-separated labels
+    - labels suggest <title>    Suggest labels for issue title
+    - labels agents <labels>    Show agent recommendations
+
   help
     Show this help message
 
@@ -1076,6 +1213,10 @@ Examples:
   npx tsx linear-ops.ts done ENG-123 ENG-124
   npx tsx linear-ops.ts wip ENG-125
   npx tsx linear-ops.ts list-initiatives
+  npx tsx linear-ops.ts labels taxonomy
+  npx tsx linear-ops.ts labels validate "feature,security,breaking-change"
+  npx tsx linear-ops.ts labels suggest "Fix XSS vulnerability in login form"
+  npx tsx linear-ops.ts labels agents "security,performance"
 `);
   }
 };

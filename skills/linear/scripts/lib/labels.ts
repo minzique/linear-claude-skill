@@ -3,51 +3,38 @@
  *
  * Ensures labels exist and are properly applied to issues.
  * Handles case-sensitivity issues and provides verification.
+ * Integrates with the domain-based label taxonomy.
  */
 import { LinearClient } from '@linear/sdk'
+import { getLabelColor, buildColorMap, isValidLabel } from './taxonomy-data'
+import { validateLabels, type ValidationResult } from './taxonomy-validation'
 
 const client = new LinearClient({ apiKey: process.env.LINEAR_API_KEY })
 
-// Common label colors by category
-const LABEL_COLORS: Record<string, string> = {
-  // Publishing
+// Use taxonomy colors as primary source, with fallbacks for legacy labels
+const TAXONOMY_COLORS = buildColorMap()
+const LEGACY_COLORS: Record<string, string> = {
+  // Legacy labels not in taxonomy (kept for backwards compatibility)
   npm: '#CB3837',
   ci: '#2088FF',
   build: '#0E8A16',
   automation: '#5319E7',
-
-  // Security & Compliance
-  security: '#D73A4A',
-  soc2: '#0052CC',
   legal: '#FEF2C0',
-
-  // Tiers
-  enterprise: '#7057FF',
-
-  // Development
-  backend: '#1D76DB',
-  frontend: '#10B981',
-  mcp: '#006B75',
-  cli: '#E99695',
   vscode: '#007ACC',
   ux: '#D4C5F9',
-
-  // Billing
   billing: '#F9D0C4',
   stripe: '#635BFF',
   marketplace: '#BFD4F2',
-
-  // Website
   website: '#3B82F6',
   auth: '#EF4444',
   dashboard: '#06B6D4',
+  reporting: '#D93F0B'
+}
 
-  // General
-  feature: '#A2EEEF',
-  integration: '#7057FF',
-  performance: '#FBCA04',
-  reporting: '#D93F0B',
-  documentation: '#0075CA'
+// Merged colors (taxonomy takes precedence)
+const LABEL_COLORS: Record<string, string> = {
+  ...LEGACY_COLORS,
+  ...TAXONOMY_COLORS
 }
 
 /**
@@ -68,16 +55,65 @@ export async function getLabelMap(teamId?: string): Promise<Map<string, string>>
 }
 
 /**
+ * Options for ensureLabelsExist
+ */
+export interface EnsureLabelsOptions {
+  /** If true, validate labels against taxonomy before creating */
+  validate?: boolean
+  /** If true and validate is true, fail on taxonomy errors */
+  strict?: boolean
+}
+
+/**
+ * Result of ensureLabelsExist with validation
+ */
+export interface EnsureLabelsResult {
+  created: string[]
+  existing: string[]
+  failed: string[]
+  labelMap: Map<string, string>
+  /** Validation result if validate option was true */
+  validation?: ValidationResult
+}
+
+/**
  * Ensure all required labels exist, creating missing ones
+ *
+ * @param teamId - Linear team ID
+ * @param labelNames - Array of label names to ensure exist
+ * @param options - Optional settings for validation
  */
 export async function ensureLabelsExist(
   teamId: string,
-  labelNames: string[]
-): Promise<{ created: string[]; existing: string[]; failed: string[]; labelMap: Map<string, string> }> {
+  labelNames: string[],
+  options: EnsureLabelsOptions = {}
+): Promise<EnsureLabelsResult> {
   const labelMap = await getLabelMap(teamId)
   const created: string[] = []
   const existing: string[] = []
   const failed: string[] = []
+
+  // Validate against taxonomy if requested
+  let validation: ValidationResult | undefined
+  if (options.validate) {
+    validation = validateLabels(labelNames)
+
+    // In strict mode, fail if validation has errors
+    if (options.strict && !validation.valid) {
+      return {
+        created: [],
+        existing: [],
+        failed: validation.errors,
+        labelMap,
+        validation
+      }
+    }
+
+    // Warn about unknown labels (but still create them unless strict)
+    if (validation.parsed.unknown.length > 0 && !options.strict) {
+      console.warn(`[WARN] Creating labels not in taxonomy: ${validation.parsed.unknown.join(', ')}`)
+    }
+  }
 
   for (const name of labelNames) {
     const key = name.toLowerCase()
@@ -114,7 +150,7 @@ export async function ensureLabelsExist(
     }
   }
 
-  return { created, existing, failed, labelMap }
+  return { created, existing, failed, labelMap, validation }
 }
 
 /**
@@ -207,6 +243,55 @@ export function extractUniqueLabels(
   }
   return Array.from(unique)
 }
+
+// Re-export taxonomy utilities for convenience
+export {
+  // Types
+  type LabelCategory,
+  type DomainLabel,
+  type TypeLabel,
+  type ScopeLabel,
+  type TaxonomyLabel,
+  type AgentId,
+  type LabelDefinition,
+  type LabelTaxonomy,
+  type LabelSuggestion,
+  type AgentSelection
+} from './taxonomy'
+
+export {
+  LABEL_TAXONOMY,
+  getAllLabels,
+  getAllLabelNames,
+  getLabelByName,
+  isValidLabel,
+  getLabelsByCategory,
+  getLabelColor,
+  DOMAIN_LABEL_NAMES,
+  TYPE_LABEL_NAMES,
+  SCOPE_LABEL_NAMES
+} from './taxonomy-data'
+
+export {
+  validateLabels,
+  suggestLabels,
+  getLabelCategory,
+  hasValidTypeLabel,
+  hasDomainLabel,
+  filterToTaxonomy,
+  formatValidationResult,
+  formatSuggestions
+} from './taxonomy-validation'
+
+export {
+  selectAgentsForIssue,
+  getLabelsForAgent,
+  canAgentHandle,
+  buildAgentDomainMatrix,
+  formatAgentSelection,
+  formatAgentMatrix,
+  AGENT_DESCRIPTIONS
+} from './agent-selection'
 
 // CLI entry point
 if (require.main === module) {
