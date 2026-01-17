@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-01-16
+
+### Added
+- **Label Taxonomy System** - Domain-based labels for consistent issue categorization
+  - 25 labels across 3 categories: Type (5), Domain (13), Scope (7)
+  - `taxonomy.ts` - TypeScript interfaces for labels, categories, and agents
+  - `taxonomy-data.ts` - Complete label definitions with colors, descriptions, agent mappings
+  - `taxonomy-validation.ts` - Validation rules and keyword-based label suggestion
+  - `agent-selection.ts` - Agent routing based on domain labels for self-selection
+
+- **Label CLI Commands** - New `labels` subcommands in `linear-ops.ts`
+  - `labels taxonomy` - Display full taxonomy with colors and agent mappings
+  - `labels validate <labels>` - Validate label combinations against taxonomy rules
+  - `labels suggest <title>` - Suggest labels based on issue title keywords
+  - `labels agents <labels>` - Show primary/secondary agent recommendations
+
+- **Label Documentation** - `docs/labels.md` with complete taxonomy guide
+  - Label selection decision tree
+  - Common query patterns for filtering by labels
+  - Programmatic usage examples
+
+### Changed
+- **labels.ts** - Integrated taxonomy colors and added validation option to `ensureLabelsExist()`
+- **index.ts** - Added exports for all taxonomy utilities
+- **SKILL.md** - Added Labels section referencing taxonomy documentation
+- **README.md** - Added Label Taxonomy to features and Key Patterns sections
+
+### Label Categories
+| Category | Labels | Required |
+|----------|--------|----------|
+| Type | `feature`, `bug`, `refactor`, `chore`, `spike` | Exactly 1 |
+| Domain | `security`, `performance`, `infrastructure`, `testing`, `reliability`, `core`, `frontend`, `backend`, `integration`, `documentation`, `mcp`, `cli`, `neural` | 1-2 recommended |
+| Scope | `breaking-change`, `tech-debt`, `blocked`, `needs-split`, `good-first-issue`, `enterprise`, `soc2` | 0-2 optional |
+
+---
+
 ## [1.6.1] - 2026-01-12
 
 ### Removed
