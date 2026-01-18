@@ -13,6 +13,37 @@ Tools and workflows for managing issues, projects, and teams in Linear.
 
 ---
 
+## ⚠️ Tool Availability (READ FIRST)
+
+**This skill supports multiple tool backends. Use whichever is available:**
+
+1. **MCP Tools (mcp__linear)** - Use if available in your tool set
+2. **Linear CLI (`linear` command)** - Always available via Bash
+3. **Helper Scripts** - For complex operations
+
+**If MCP tools are NOT available**, use the Linear CLI via Bash:
+
+```bash
+# View an issue
+linear issues view SMI-123
+
+# Create an issue
+linear issues create --title "Issue title" --description "Description"
+
+# Update issue status (get state IDs first)
+linear issues update SMI-123 -s "STATE_ID"
+
+# Add a comment
+linear issues comment add SMI-123 -m "Comment text"
+
+# List issues
+linear issues list
+```
+
+**Do NOT report "MCP tools not available" as a blocker** - use CLI instead.
+
+---
+
 ## 🔐 Security: Varlock Integration
 
 **CRITICAL**: Never expose API keys in terminal output or Claude's context.
