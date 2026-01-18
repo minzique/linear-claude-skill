@@ -23,7 +23,7 @@ A comprehensive [Claude Code](https://claude.ai/code) skill for managing Linear 
 
 ```bash
 # Option A: Claude Plugin (Recommended)
-claude plugin add github:wrsmith108/linear-claude-skill
+claude plugin install github:wrsmith108/linear-claude-skill
 
 # Option B: Manual Installation
 git clone https://github.com/wrsmith108/linear-claude-skill ~/.claude/skills/linear
