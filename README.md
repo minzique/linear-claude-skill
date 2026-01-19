@@ -33,7 +33,7 @@ cd ~/.claude/skills/linear && npm install
 ### 2. Run Setup Check
 
 ```bash
-npx tsx ~/.claude/skills/linear/skills/linear/scripts/setup.ts
+npx tsx ~/.claude/skills/linear/scripts/setup.ts
 ```
 
 This checks your configuration and tells you exactly what's missing.
@@ -54,7 +54,7 @@ source ~/.zshrc
 ### 4. Verify It Works
 
 ```bash
-npx tsx ~/.claude/skills/linear/skills/linear/scripts/linear-ops.ts whoami
+npx tsx ~/.claude/skills/linear/scripts/linear-ops.ts whoami
 ```
 
 You should see your name and organization.
@@ -123,8 +123,8 @@ cd ~/.claude/skills/linear && npm install
 ## Directory Structure
 
 ```
-skills/linear/
-├── SKILL.md          # Main skill instructions
+linear-claude-skill/
+├── SKILL.md          # Main skill instructions (Claude Code discovers this)
 ├── api.md            # GraphQL API reference
 ├── sdk.md            # SDK automation patterns
 ├── sync.md           # Bulk sync patterns
@@ -135,6 +135,7 @@ skills/linear/
 │   ├── query.ts      # GraphQL query runner
 │   ├── setup.ts      # Configuration checker
 │   ├── sync.ts       # Bulk sync CLI tool
+│   ├── linear-api.mjs # Direct API wrapper
 │   └── lib/          # Shared utilities (taxonomy, labels, verification)
 └── hooks/
     └── post-edit.sh  # Auto-sync hook
@@ -154,7 +155,7 @@ linear projects list | grep -i "phase\|feature-name"
 linear issues list --filter "title:keyword"
 ```
 
-See `skills/linear/SKILL.md` → "Discovery Before Creation" for the full checklist.
+See `SKILL.md` → "Discovery Before Creation" for the full checklist.
 
 ### Codebase Verification Before Work (Critical!)
 
@@ -170,7 +171,7 @@ grep -r "test.skip" tests/          # Check if tests are just skipped
 
 **Key Lesson**: Issues describing "missing" features may already be implemented. The real work is often un-skipping tests and fixing assertions, not reimplementing.
 
-See `skills/linear/SKILL.md` → "Codebase Verification Before Work" for the full checklist.
+See `SKILL.md` → "Codebase Verification Before Work" for the full checklist.
 
 ### MCP Reliability (Critical!)
 
@@ -183,7 +184,7 @@ The Linear MCP server has known reliability issues (34% timeout rate due to SSE 
 | Update status | ⚠️ Unreliable | Use GraphQL |
 | Add comment | ❌ Broken | Use GraphQL |
 
-See `skills/linear/SKILL.md` for GraphQL workaround patterns and root cause explanation.
+See `SKILL.md` for GraphQL workaround patterns and root cause explanation.
 
 ### Content vs Description (Critical!)
 
@@ -250,7 +251,7 @@ npx tsx scripts/linear-ops.ts labels agents "security,performance"
 - **Domain** (1-2 recommended): `security`, `backend`, `frontend`, `testing`, `infrastructure`, `mcp`, `cli`, etc.
 - **Scope** (0-2 optional): `blocked`, `breaking-change`, `tech-debt`, `needs-split`, `good-first-issue`
 
-See `skills/linear/docs/labels.md` for the complete taxonomy guide.
+See `docs/labels.md` for the complete taxonomy guide.
 
 ### Resource Links
 
@@ -310,7 +311,7 @@ mutation {
 ```
 
 ### Bulk Operations (SDK)
-See `skills/linear/sdk.md` for TypeScript patterns for loops, filtering, and batch updates.
+See `sdk.md` for TypeScript patterns for loops, filtering, and batch updates.
 
 ### Bulk Sync (NEW)
 
@@ -357,7 +358,7 @@ Auto-suggest sync after code edits. Add to `.claude/settings.json`:
 }
 ```
 
-See `skills/linear/sync.md` for complete patterns including AgentDB integration.
+See `sync.md` for complete patterns including AgentDB integration.
 
 ## Contributing
 

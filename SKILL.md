@@ -103,7 +103,7 @@ cat .env
 Run the setup check to verify your configuration:
 
 ```bash
-npx tsx ~/.claude/skills/linear/skills/linear/scripts/setup.ts
+npx tsx ~/.claude/skills/linear/scripts/setup.ts
 ```
 
 This will check:
@@ -136,7 +136,7 @@ echo 'LINEAR_API_KEY=lin_api_your_key_here' >> ~/.claude/.env
 Verify everything works:
 
 ```bash
-npx tsx ~/.claude/skills/linear/skills/linear/scripts/query.ts "query { viewer { name } }"
+npx tsx ~/.claude/skills/linear/scripts/query.ts "query { viewer { name } }"
 ```
 
 You should see your name from Linear.
@@ -395,7 +395,7 @@ update_issue with id="issue-uuid", state="In Progress"
 
 ```bash
 # Update single issue (use issue identifier like PROJ-123)
-node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs update-status --issue <TEAM>-123 --status Done
+node ~/.claude/skills/linear/scripts/linear-api.mjs update-status --issue <TEAM>-123 --status Done
 
 # Available states: Backlog, Todo, In Progress, In Review, Done, Canceled
 ```
@@ -406,30 +406,30 @@ A complete API wrapper with proper JSON escaping and error handling:
 
 ```bash
 # Create issue (replace <TEAM> with your team key, e.g., ENG, PROJ)
-node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs create-issue \
+node ~/.claude/skills/linear/scripts/linear-api.mjs create-issue \
   --team <TEAM> --title "New feature" --description "Details here" --priority 2
 
 # Update status (replace <TEAM>-123 with your issue identifier)
-node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs update-status \
+node ~/.claude/skills/linear/scripts/linear-api.mjs update-status \
   --issue <TEAM>-123 --status done
 
 # Add comment
-node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs add-comment \
+node ~/.claude/skills/linear/scripts/linear-api.mjs add-comment \
   --issue <TEAM>-123 --body "Fixed in PR #25"
 
 # Add project update
-node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs add-project-update \
+node ~/.claude/skills/linear/scripts/linear-api.mjs add-project-update \
   --project <PROJECT_UUID> --body "## Status Update\n\nProgress details..." --health onTrack
 
 # List issues
-node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs list-issues \
+node ~/.claude/skills/linear/scripts/linear-api.mjs list-issues \
   --team <TEAM> --status "In Progress" --limit 20
 
 # List labels
-node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs list-labels --team <TEAM>
+node ~/.claude/skills/linear/scripts/linear-api.mjs list-labels --team <TEAM>
 
 # Help
-node ~/.claude/skills/linear/skills/linear/scripts/linear-api.mjs help
+node ~/.claude/skills/linear/scripts/linear-api.mjs help
 ```
 
 **Benefits over MCP:**
@@ -1050,7 +1050,7 @@ mutation {
 **Example using query.ts:**
 
 ```bash
-npx tsx ~/.claude/skills/linear/skills/linear/scripts/query.ts 'mutation {
+npx tsx ~/.claude/skills/linear/scripts/query.ts 'mutation {
   initiativeToProjectCreate(input: {
     initiativeId: "<initiative-uuid>",
     projectId: "<project-uuid>"
