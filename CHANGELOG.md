@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-01-18
+
+### BREAKING CHANGES
+- **Restructured for Claude Code Skill Discovery** - Moved all files to root level
+  - `SKILL.md` now at repository root (was `skills/linear/SKILL.md`)
+  - `scripts/` now at root (was `skills/linear/scripts/`)
+  - `docs/` now at root (was `skills/linear/docs/`)
+  - `hooks/` now at root (was `skills/linear/hooks/`)
+  - `api.md`, `sdk.md`, `sync.md` now at root level
+
+### Fixed
+- **Skill Not Discovered** - Claude Code scans `~/.claude/skills/<name>/SKILL.md` but the nested structure prevented discovery (Fixes #5)
+
+### Changed
+- **package.json** - Updated `files` array and `scripts` paths for flat structure
+- **claude-plugin.skills** - Changed from `["skills/linear"]` to `["."]`
+- **All path references** - Updated in SKILL.md, README.md, and documentation
+
+### Migration
+Users who cloned the repo should `git pull` - the skill will be automatically discovered on next Claude Code session.
+
+For fresh installs:
+```bash
+git clone https://github.com/wrsmith108/linear-claude-skill.git ~/.claude/skills/linear
+cd ~/.claude/skills/linear && npm install
+```
+
+---
+
 ## [1.7.1] - 2026-01-18
 
 ### Fixed
