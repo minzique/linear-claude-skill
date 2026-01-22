@@ -22,10 +22,6 @@ A comprehensive [Claude Code](https://claude.ai/code) skill for managing Linear 
 ### 1. Install the Skill
 
 ```bash
-# Option A: Claude Plugin (Recommended)
-claude plugin install github:wrsmith108/linear-claude-skill
-
-# Option B: Manual Installation
 git clone https://github.com/wrsmith108/linear-claude-skill ~/.claude/skills/linear
 cd ~/.claude/skills/linear && npm install
 ```
@@ -84,14 +80,6 @@ npx tsx scripts/linear-ops.ts help
 ---
 
 ## Installation
-
-### Option A: Claude Plugin (Recommended)
-
-```bash
-claude plugin add github:wrsmith108/linear-claude-skill
-```
-
-### Option B: Manual Installation
 
 ```bash
 # Clone directly to your skills directory
