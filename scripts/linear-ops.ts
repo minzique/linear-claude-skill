@@ -283,7 +283,7 @@ const commands: Record<string, (...args: string[]) => Promise<void>> = {
   async 'link-initiative'(projectName: string, initiativeName: string) {
     if (!projectName || !initiativeName) {
       console.error('Usage: link-initiative <project-name> <initiative-name>');
-      console.error('Example: link-initiative "Phase 8: MCP Decision Engine" "Skillsmith"');
+      console.error('Example: link-initiative "Phase 8: MCP Decision Engine" "Q1 Goals"');
       process.exit(1);
     }
 

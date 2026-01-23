@@ -25,16 +25,16 @@ Tools and workflows for managing issues, projects, and teams in Linear.
 
 ```bash
 # View an issue
-linear issues view SMI-123
+linear issues view ENG-123
 
 # Create an issue
 linear issues create --title "Issue title" --description "Description"
 
 # Update issue status (get state IDs first)
-linear issues update SMI-123 -s "STATE_ID"
+linear issues update ENG-123 -s "STATE_ID"
 
 # Add a comment
-linear issues comment add SMI-123 -m "Comment text"
+linear issues comment add ENG-123 -m "Comment text"
 
 # List issues
 linear issues list
@@ -174,7 +174,7 @@ See [Project Management Commands](#project-management-commands) for full referen
 
 1. **Create the project first**:
    ```bash
-   npx tsx scripts/linear-ops.ts create-project "Phase X: Feature Name" "Skillsmith"
+   npx tsx scripts/linear-ops.ts create-project "Phase X: Feature Name" "My Initiative"
    ```
 
 2. **Set project state to Planned**:
@@ -185,8 +185,8 @@ See [Project Management Commands](#project-management-commands) for full referen
 3. **Create issues directly in the project**:
    ```bash
    npx tsx scripts/linear-ops.ts create-issue "Phase X: Feature Name" "Parent task" "Description"
-   npx tsx scripts/linear-ops.ts create-sub-issue SMI-XXX "Sub-task 1" "Description"
-   npx tsx scripts/linear-ops.ts create-sub-issue SMI-XXX "Sub-task 2" "Description"
+   npx tsx scripts/linear-ops.ts create-sub-issue ENG-XXX "Sub-task 1" "Description"
+   npx tsx scripts/linear-ops.ts create-sub-issue ENG-XXX "Sub-task 2" "Description"
    ```
 
 4. **Update project state when work begins**:
@@ -254,11 +254,11 @@ npx tsx scripts/linear-ops.ts link-initiative <project-name> <initiative-name>
 
 **Examples:**
 ```bash
-# Link Phase 8 to Skillsmith initiative
-npx tsx scripts/linear-ops.ts link-initiative "Phase 8: MCP Decision Engine" "Skillsmith"
+# Link a project to an initiative
+npx tsx scripts/linear-ops.ts link-initiative "Phase 8: MCP Decision Engine" "Q1 Goals"
 
 # Partial matching works
-npx tsx scripts/linear-ops.ts link-initiative "Phase 8" "Skillsmith"
+npx tsx scripts/linear-ops.ts link-initiative "Phase 8" "Q1 Goals"
 ```
 
 ### unlink-initiative
@@ -286,20 +286,20 @@ npx tsx scripts/linear-ops.ts unlink-initiative "Test Project" "Q1 Goals"
 
 ```bash
 # 1. Create project linked to initiative
-npx tsx scripts/linear-ops.ts create-project "Phase 11: New Feature" "Skillsmith"
+npx tsx scripts/linear-ops.ts create-project "Phase 11: New Feature" "Q1 Goals"
 
 # 2. Set state to planned
 npx tsx scripts/linear-ops.ts project-status "Phase 11" planned
 
 # 3. Create issues in the project
 npx tsx scripts/linear-ops.ts create-issue "Phase 11" "Parent task" "Description"
-npx tsx scripts/linear-ops.ts create-sub-issue SMI-XXX "Sub-task 1" "Details"
+npx tsx scripts/linear-ops.ts create-sub-issue ENG-XXX "Sub-task 1" "Details"
 
 # 4. Start work - update to in-progress
 npx tsx scripts/linear-ops.ts project-status "Phase 11" in-progress
 
 # 5. Mark issues done
-npx tsx scripts/linear-ops.ts status Done SMI-XXX SMI-YYY
+npx tsx scripts/linear-ops.ts status Done ENG-XXX ENG-YYY
 
 # 6. Complete project
 npx tsx scripts/linear-ops.ts project-status "Phase 11" completed

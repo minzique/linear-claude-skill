@@ -307,13 +307,13 @@ Synchronize code changes with Linear issues in bulk:
 
 ```bash
 # Update multiple issues to Done
-npx ts-node scripts/sync.ts --issues SMI-432,SMI-433,SMI-434 --state Done
+npx ts-node scripts/sync.ts --issues ENG-432,ENG-433,ENG-434 --state Done
 
 # Update project status after phase completion
 npx ts-node scripts/sync.ts --project "Phase 11" --state completed
 
 # Verify sync completed
-npx ts-node scripts/sync.ts --verify SMI-432,SMI-433 --expected-state Done
+npx ts-node scripts/sync.ts --verify ENG-432,ENG-433 --expected-state Done
 ```
 
 #### Agent-Spawned Sync
@@ -323,7 +323,7 @@ Spawn a parallel agent for autonomous sync via Task tool:
 ```javascript
 Task({
   description: "Sync Phase 11 to Linear",
-  prompt: "Update SMI-432,433,434 to Done. Update project to completed.",
+  prompt: "Update ENG-432,433,434 to Done. Update project to completed.",
   subagent_type: "general-purpose"
 })
 ```

@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-01-23
+
+### Fixed
+- **Generalization cleanup** - Removed remaining project-specific references for public distribution
+  - Changed "Skillsmith" to generic "My Initiative" or "Q1 Goals" in examples
+  - Changed `SMI-` issue prefixes to generic `ENG-` in all documentation
+  - Updated CHANGELOG to remove internal script names and project references
+
+---
+
 ## [2.0.0] - 2026-01-18
 
 ### BREAKING CHANGES
@@ -84,7 +94,7 @@ cd ~/.claude/skills/linear && npm install
   - `create-phase5-issues.ts`, `create-phase6-issues.ts` - Phase-specific issue creation
   - `create-next-steps.ts` - Phase 2i/2j planning script
   - `update-phase7-deps.ts` - One-off dependency fix
-  - `fix-skillsmith-structure.ts`, `fix-skillsmith-structure-v2.ts` - Structure fixes
+  - `fix-project-structure.ts`, `fix-project-structure-v2.ts` - Structure fixes
   - `update-status.ts` - Redundant with `sync.ts`
   - `verify-linear-structure.ts` - Hardcoded debugging script
 
@@ -124,7 +134,7 @@ cd ~/.claude/skills/linear && npm install
 - **Documentation** - Comprehensive command reference with examples
   - Valid states table showing input → API value mapping
   - Error handling notes for each command
-  - Real-world examples from Skillsmith phases 8-10
+  - Real-world examples for project phases and initiatives
 
 ---
 
