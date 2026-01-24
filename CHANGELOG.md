@@ -1,3 +1,15 @@
+# [2.2.0](https://github.com/wrsmith108/linear-claude-skill/compare/v2.1.1...v2.2.0) (2026-01-24)
+
+
+### Bug Fixes
+
+* use Node 22 for semantic-release compatibility ([02b5b79](https://github.com/wrsmith108/linear-claude-skill/commit/02b5b79e64d19ed6a86b93464a0fc7afc54cf7d2))
+
+
+### Features
+
+* add semantic-release for automated versioning ([bd4c77b](https://github.com/wrsmith108/linear-claude-skill/commit/bd4c77bb813dfaea749924bfb9efd0f23d111516))
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
