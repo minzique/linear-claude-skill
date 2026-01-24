@@ -115,9 +115,9 @@ Implementation complete. All tests passing."
 This is NOT a blocker. Use the Linear CLI via Bash:
 
 ```bash
-linear issues view SMI-123
+linear issues view ENG-123
 linear issues create --title "Issue title"
-linear issues update SMI-123 -s "STATE_ID"
+linear issues update ENG-123 -s "STATE_ID"
 ```
 
 ### Status Update Fails with Schema Error
