@@ -1004,6 +1004,7 @@ const commands: Record<string, (...args: string[]) => Promise<void>> = {
       console.error('  validate <labels>     Validate a comma-separated list of labels');
       console.error('  suggest <title>       Suggest labels based on issue title');
       console.error('  agents <labels>       Show agent recommendations for labels');
+      console.error('  set <issue> <labels>  Set labels on an existing issue');
       process.exit(1);
     }
 
@@ -1019,6 +1020,9 @@ const commands: Record<string, (...args: string[]) => Promise<void>> = {
         break;
       case 'agents':
         await commands['labels-agents'](args.join(','));
+        break;
+      case 'set':
+        await commands['labels-set'](...args);
         break;
       default:
         console.error(`Unknown subcommand: ${subcommand}`);
@@ -1112,6 +1116,133 @@ const commands: Record<string, (...args: string[]) => Promise<void>> = {
     console.log(formatAgentMatrix());
   },
 
+  async 'labels-set'(issueIdentifier: string, labelString: string, ...flags: string[]) {
+    if (!issueIdentifier || !labelString) {
+      console.error('Usage: labels set <issue-id> <labels> [--replace]');
+      console.error('Example: labels set SMI-1770 mcp,DX,feature');
+      console.error('Example: labels set ENG-123 bug,security --replace');
+      console.error('\nOptions:');
+      console.error('  --replace    Replace all existing labels (default: add to existing)');
+      console.error('\nLabels are validated against the taxonomy before applying.');
+      process.exit(1);
+    }
+
+    // Parse flags
+    const replaceMode = flags.includes('--replace');
+
+    // Parse label names
+    const labelNames = labelString.split(',').map(l => l.trim()).filter(l => l);
+    if (labelNames.length === 0) {
+      console.error('[ERROR] No valid labels provided');
+      process.exit(1);
+    }
+
+    console.log(`Setting labels on issue: ${issueIdentifier}...`);
+    console.log(`  Labels: ${labelNames.join(', ')}`);
+    console.log(`  Mode: ${replaceMode ? 'replace all' : 'add to existing'}`);
+
+    // Validate labels against taxonomy
+    const validation = validateLabels(labelNames);
+    if (validation.warnings.length > 0) {
+      for (const warn of validation.warnings) {
+        console.log(`  [WARNING] ${warn}`);
+      }
+    }
+    if (validation.parsed.unknown.length > 0) {
+      console.log(`  [WARNING] Labels not in taxonomy: ${validation.parsed.unknown.join(', ')}`);
+    }
+
+    // Parse issue identifier (e.g., "SMI-1770" -> 1770, or just "1770")
+    const issueNum = parseInt(issueIdentifier.replace(/^[A-Z]+-/i, ''), 10);
+    if (isNaN(issueNum)) {
+      console.error(`[ERROR] "${issueIdentifier}" is not a valid issue identifier`);
+      process.exit(1);
+    }
+
+    // Find issue by number
+    const issues = await client.issues({
+      filter: { number: { eq: issueNum } }
+    });
+
+    if (issues.nodes.length === 0) {
+      console.error(`[ERROR] Issue #${issueNum} not found`);
+      process.exit(1);
+    }
+
+    const issue = issues.nodes[0];
+    console.log(`  Found: ${issue.identifier} - ${issue.title}`);
+
+    // Get team for label resolution
+    const team = await issue.team;
+    if (!team) {
+      console.error('[ERROR] Could not determine team from issue');
+      process.exit(1);
+    }
+
+    // Build label map from workspace labels (case-insensitive lookup)
+    // Fetch with higher limit to ensure we get all labels
+    const workspaceLabels = await client.issueLabels({ first: 250 });
+    const labelMap = new Map<string, { id: string; name: string }>();
+    for (const label of workspaceLabels.nodes) {
+      labelMap.set(label.name.toLowerCase(), { id: label.id, name: label.name });
+    }
+
+    // Resolve label names to IDs
+    const resolvedLabels: { id: string; name: string }[] = [];
+    const notFound: string[] = [];
+
+    for (const name of labelNames) {
+      const found = labelMap.get(name.toLowerCase());
+      if (found) {
+        resolvedLabels.push(found);
+      } else {
+        notFound.push(name);
+      }
+    }
+
+    if (notFound.length > 0) {
+      console.log(`  [WARNING] Labels not found in workspace: ${notFound.join(', ')}`);
+    }
+
+    if (resolvedLabels.length === 0) {
+      console.error('[ERROR] No valid labels could be resolved');
+      process.exit(1);
+    }
+
+    // Get existing labels
+    const existingLabels = await issue.labels();
+    const existingNames = existingLabels.nodes.map(l => l.name);
+
+    let finalLabelIds: string[];
+    if (replaceMode) {
+      // Replace mode: use only the new labels
+      finalLabelIds = resolvedLabels.map(l => l.id);
+    } else {
+      // Add mode: merge with existing labels
+      const existingIds = existingLabels.nodes.map(l => l.id);
+      const newIds = resolvedLabels
+        .filter(l => !existingIds.includes(l.id))
+        .map(l => l.id);
+      finalLabelIds = [...existingIds, ...newIds];
+    }
+
+    // Update issue
+    await issue.update({ labelIds: finalLabelIds });
+
+    // Verify the update
+    const updatedIssue = await client.issue(issue.id);
+    const updatedLabels = await updatedIssue.labels();
+    const updatedNames = updatedLabels.nodes.map(l => l.name);
+
+    console.log('\n[SUCCESS] Labels updated!');
+    console.log(`  Issue: ${issue.identifier}`);
+    if (!replaceMode && existingNames.length > 0) {
+      console.log(`  Previous: ${existingNames.join(', ')}`);
+    }
+    console.log(`  Current:  ${updatedNames.join(', ')}`);
+    console.log(`  URL:      ${issue.url}`);
+  },
+
   async 'help'() {
     console.log(`
 Linear High-Level Operations
@@ -1195,6 +1326,7 @@ Commands:
     - labels validate <labels>  Validate comma-separated labels
     - labels suggest <title>    Suggest labels for issue title
     - labels agents <labels>    Show agent recommendations
+    - labels set <issue> <labels> [--replace]  Set labels on existing issue
 
   help
     Show this help message
@@ -1217,6 +1349,8 @@ Examples:
   npx tsx linear-ops.ts labels validate "feature,security,breaking-change"
   npx tsx linear-ops.ts labels suggest "Fix XSS vulnerability in login form"
   npx tsx linear-ops.ts labels agents "security,performance"
+  npx tsx linear-ops.ts labels set SMI-1770 mcp,DX,feature
+  npx tsx linear-ops.ts labels set ENG-123 bug,security --replace
 `);
   }
 };
