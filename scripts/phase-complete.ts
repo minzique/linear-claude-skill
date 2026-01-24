@@ -1,6 +1,6 @@
 #!/usr/bin/env npx tsx
 
-#!/**
+/**
  * Phase Completion Workflow
  *
  * Automates the complete phase/project completion process:
@@ -140,7 +140,7 @@ async function fetchProjectDetailsOptimized(
         }>;
       };
     };
-  }>(
+  }, { projectId: string }>(
     `
     query GetProjectDetails($projectId: String!) {
       project(id: $projectId) {
@@ -209,7 +209,7 @@ async function getCompletedStatus(
   // Fetch all project statuses and find "Completed"
   const result = await client.client.rawRequest<{
     projectStatuses: { nodes: ProjectStatus[] };
-  }>(`
+  }, Record<string, never>>(`
     query {
       projectStatuses {
         nodes {
@@ -232,7 +232,7 @@ async function updateProjectStatus(
 ): Promise<boolean> {
   const result = await client.client.rawRequest<{
     projectUpdate: { success: boolean };
-  }>(
+  }, { id: string; statusId: string }>(
     `
     mutation UpdateProjectStatus($id: String!, $statusId: String!) {
       projectUpdate(id: $id, input: { statusId: $statusId }) {
@@ -260,7 +260,7 @@ async function createProjectUpdate(
       success: boolean;
       projectUpdate: { id: string; url: string };
     };
-  }>(
+  }, { projectId: string; body: string }>(
     `
     mutation CreateProjectUpdate($projectId: String!, $body: String!) {
       projectUpdateCreate(input: {
@@ -288,7 +288,7 @@ async function archiveProject(
 ): Promise<boolean> {
   const result = await client.client.rawRequest<{
     projectArchive: { success: boolean };
-  }>(
+  }, { id: string }>(
     `
     mutation ArchiveProject($id: String!) {
       projectArchive(id: $id) {

@@ -6,6 +6,7 @@
  * Integrates with the domain-based label taxonomy.
  */
 import { LinearClient } from '@linear/sdk'
+import { fileURLToPath } from 'url'
 import { getLabelColor, buildColorMap, isValidLabel } from './taxonomy-data'
 import { validateLabels, type ValidationResult } from './taxonomy-validation'
 
@@ -294,7 +295,7 @@ export {
 } from './agent-selection'
 
 // CLI entry point
-if (require.main === module) {
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   async function main() {
     const command = process.argv[2]
     const teamId = process.argv[3]

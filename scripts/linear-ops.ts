@@ -24,9 +24,8 @@
  *   whoami                                   Show current user and organization
  */
 
-import { LinearClient, Initiative, Project } from '@linear/sdk';
+import { LinearClient, ProjectUpdateHealthType, InitiativeUpdateHealthType } from '@linear/sdk';
 import {
-  LABEL_TAXONOMY,
   getAllLabels,
   getLabelsByCategory,
   validateLabels,
@@ -103,7 +102,7 @@ const commands: Record<string, (...args: string[]) => Promise<void>> = {
     console.log(`  Using team: ${team.name}`);
 
     // Resolve label names to IDs if provided
-    let labelIds: string[] = [];
+    const labelIds: string[] = [];
     if (labelNames.length > 0) {
       const labels = await team.labels();
       for (const name of labelNames) {
@@ -398,12 +397,11 @@ const commands: Record<string, (...args: string[]) => Promise<void>> = {
     }
 
     // Parse health flag
-    let health: 'onTrack' | 'atRisk' | 'offTrack' = 'onTrack';
+    let health = ProjectUpdateHealthType.OnTrack;
     if (healthFlag === '--health' || healthFlag?.startsWith('--health=')) {
       const value = healthFlag.includes('=') ? healthFlag.split('=')[1] : body;
-      if (['onTrack', 'atRisk', 'offTrack'].includes(value)) {
-        health = value as typeof health;
-      }
+      if (value === 'atRisk') health = ProjectUpdateHealthType.AtRisk;
+      else if (value === 'offTrack') health = ProjectUpdateHealthType.OffTrack;
     }
 
     console.log(`Creating project update for: ${projectName}...`);
@@ -446,12 +444,11 @@ const commands: Record<string, (...args: string[]) => Promise<void>> = {
     }
 
     // Parse health flag
-    let health: 'onTrack' | 'atRisk' | 'offTrack' = 'onTrack';
+    let health = InitiativeUpdateHealthType.OnTrack;
     if (healthFlag === '--health' || healthFlag?.startsWith('--health=')) {
       const value = healthFlag.includes('=') ? healthFlag.split('=')[1] : body;
-      if (['onTrack', 'atRisk', 'offTrack'].includes(value)) {
-        health = value as typeof health;
-      }
+      if (value === 'atRisk') health = InitiativeUpdateHealthType.AtRisk;
+      else if (value === 'offTrack') health = InitiativeUpdateHealthType.OffTrack;
     }
 
     console.log(`Creating initiative update for: ${initiativeName}...`);
@@ -903,7 +900,7 @@ const commands: Record<string, (...args: string[]) => Promise<void>> = {
     }
 
     // Resolve label names to IDs if provided
-    let labelIds: string[] = [];
+    const labelIds: string[] = [];
     if (labelNames.length > 0) {
       const labels = await parentTeam.labels();
       for (const name of labelNames) {

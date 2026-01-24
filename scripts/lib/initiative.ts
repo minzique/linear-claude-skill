@@ -5,6 +5,7 @@
  * This module ensures projects are properly connected.
  */
 import { LinearClient } from '@linear/sdk'
+import { fileURLToPath } from 'url'
 
 const client = new LinearClient({ apiKey: process.env.LINEAR_API_KEY })
 
@@ -129,7 +130,8 @@ export async function getProjectInitiativeStatus(): Promise<
   const results = []
 
   for (const proj of projects.nodes) {
-    const initiative = await proj.initiative
+    const initiatives = await proj.initiatives()
+    const initiative = initiatives?.nodes?.[0]
     results.push({
       id: proj.id,
       name: proj.name,
@@ -185,7 +187,7 @@ export async function linkProjectsToInitiative(
 }
 
 // CLI entry point
-if (require.main === module) {
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   async function main() {
     const command = process.argv[2]
     const initiativeId = process.argv[3] || DEFAULT_INITIATIVE_ID

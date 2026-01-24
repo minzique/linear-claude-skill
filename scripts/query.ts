@@ -73,7 +73,7 @@ async function main() {
   if (variablesArg) {
     try {
       variables = JSON.parse(variablesArg);
-    } catch (error) {
+    } catch (_error) {
       console.error('Error: Variables must be valid JSON');
       console.error(`Received: ${variablesArg}`);
       process.exit(1);

@@ -8,6 +8,7 @@
  * - All labels applied
  */
 import { LinearClient } from '@linear/sdk'
+import { fileURLToPath } from 'url'
 import { isProjectLinkedToInitiative, DEFAULT_INITIATIVE_ID } from './initiative'
 import { verifyLabelsApplied } from './labels'
 
@@ -238,7 +239,7 @@ export function printVerificationReport(verification: ProjectVerification): void
 }
 
 // CLI entry point
-if (require.main === module) {
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   async function main() {
     const command = process.argv[2]
 

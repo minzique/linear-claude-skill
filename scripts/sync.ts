@@ -161,7 +161,7 @@ async function main() {
 
       // Add comment if provided
       if (options.comment) {
-        await issue.addComment({ body: options.comment });
+        await client.createComment({ issueId: issue.id, body: options.comment });
       }
 
       console.log(`✅ Updated to "${targetState.name}"${options.comment ? ' + comment' : ''}`);

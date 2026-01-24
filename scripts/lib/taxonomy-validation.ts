@@ -15,6 +15,9 @@ import type {
   LabelCategory
 } from './taxonomy'
 
+// Re-export types for consumers
+export type { ValidationResult, LabelSuggestion }
+
 import {
   LABEL_TAXONOMY,
   getLabelByName,

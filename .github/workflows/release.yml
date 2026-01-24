@@ -1,0 +1,32 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract release notes
+        id: notes
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          # Extract section for this version from CHANGELOG.md
+          awk "/^## \[${VERSION}\]/{flag=1; next} /^## \[/{flag=0} flag" CHANGELOG.md > notes.md
+          # If no notes found, create a placeholder
+          if [ ! -s notes.md ]; then
+            echo "Release ${VERSION}" > notes.md
+          fi
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: notes.md
+          generate_release_notes: false

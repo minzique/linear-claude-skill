@@ -10,6 +10,7 @@
  * 6. Post-execution verification
  */
 import { LinearClient } from '@linear/sdk'
+import { fileURLToPath } from 'url'
 import { linkProjectToInitiative, DEFAULT_INITIATIVE_ID } from './initiative'
 import { ensureLabelsExist, extractUniqueLabels } from './labels'
 import { verifyProjectCreation } from './verify'
@@ -111,8 +112,7 @@ export async function createProject(
     const createResult = await client.createProject({
       teamIds: [teamId],
       name: config.name,
-      description: config.shortDescription.substring(0, 255),
-      state: config.state
+      description: config.shortDescription.substring(0, 255)
     })
     const project = await createResult.project
     if (!project) {
@@ -278,7 +278,7 @@ export async function createProjectWithDefaults(
 }
 
 // CLI entry point with example
-if (require.main === module) {
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   async function main() {
     const command = process.argv[2]
 

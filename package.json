@@ -1,6 +1,7 @@
 {
   "name": "claude-plugin-linear",
   "version": "2.1.0",
+  "type": "module",
   "description": "Claude Code skill for Linear issue, project, and team management with MCP integration",
   "keywords": [
     "claude",
@@ -37,7 +38,10 @@
     "setup": "npx tsx scripts/setup.ts",
     "ops": "npx tsx scripts/linear-ops.ts",
     "query": "npx tsx scripts/query.ts",
-    "test-connection": "npx tsx scripts/query.ts \"query { viewer { name } }\""
+    "test-connection": "npx tsx scripts/query.ts \"query { viewer { name } }\"",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint scripts/",
+    "lint:fix": "eslint scripts/ --fix"
   },
   "claude-plugin": {
     "name": "Linear",
@@ -46,5 +50,11 @@
   },
   "dependencies": {
     "@linear/sdk": "^68.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "eslint": "^9.0.0",
+    "@eslint/js": "^9.0.0",
+    "typescript-eslint": "^8.0.0"
   }
 }
