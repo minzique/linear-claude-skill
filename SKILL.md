@@ -148,10 +148,10 @@ You should see your name from Linear.
 npx tsx scripts/linear-ops.ts create-issue "Project" "Title" "Description"
 
 # Update issue status
-npx tsx scripts/linear-ops.ts status Done SMI-123 SMI-124
+npx tsx scripts/linear-ops.ts status Done ENG-123 ENG-124
 
 # Create sub-issue
-npx tsx scripts/linear-ops.ts create-sub-issue SMI-100 "Sub-task" "Details"
+npx tsx scripts/linear-ops.ts create-sub-issue ENG-100 "Sub-task" "Details"
 
 # Update project status
 npx tsx scripts/linear-ops.ts project-status "Phase 1" completed
@@ -436,14 +436,14 @@ For advanced project and initiative management patterns, see **[projects.md](pro
 
 ```bash
 # Create project linked to initiative
-npx tsx scripts/linear-ops.ts create-project "Phase X: Name" "Skillsmith"
+npx tsx scripts/linear-ops.ts create-project "Phase X: Name" "My Initiative"
 
 # Update project status
 npx tsx scripts/linear-ops.ts project-status "Phase X" in-progress
 npx tsx scripts/linear-ops.ts project-status "Phase X" completed
 
 # Link/unlink projects to initiatives
-npx tsx scripts/linear-ops.ts link-initiative "Phase X" "Skillsmith"
+npx tsx scripts/linear-ops.ts link-initiative "Phase X" "My Initiative"
 npx tsx scripts/linear-ops.ts unlink-initiative "Phase X" "Old Initiative"
 ```
 
@@ -466,7 +466,7 @@ For bulk synchronization of code changes to Linear, see **[sync.md](sync.md)**.
 
 ```bash
 # Bulk update issues to Done
-npx tsx scripts/linear-ops.ts status Done SMI-101 SMI-102 SMI-103
+npx tsx scripts/linear-ops.ts status Done ENG-101 ENG-102 ENG-103
 
 # Update project status
 npx tsx scripts/linear-ops.ts project-status "My Project" completed
