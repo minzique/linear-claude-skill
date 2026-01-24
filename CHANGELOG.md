@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - 2026-01-24
+
+### Added
+- **CI/CD Workflows** - GitHub Actions for automated validation and releases
+  - CI workflow runs TypeScript type checking and ESLint on push/PR to main
+  - Release workflow automatically creates GitHub releases from version tags
+  - Added `typecheck`, `lint`, `lint:fix` npm scripts
+
+### Fixed
+- **TypeScript compatibility** - Fixed type errors for Linear SDK v68
+  - Updated health type usage to use SDK enums
+  - Fixed `rawRequest` generic types
+  - Converted `require.main` checks to ES module syntax
+  - Added `@types/node` for Node.js globals
+
+---
+
 ## [2.1.0] - 2026-01-23
 
 ### Added
