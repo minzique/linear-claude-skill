@@ -324,7 +324,7 @@ Spawn a parallel agent for autonomous sync via Task tool:
 Task({
   description: "Sync Phase 11 to Linear",
   prompt: "Update ENG-432,433,434 to Done. Update project to completed.",
-  subagent_type: "general-purpose"
+  subagent_type: "Linear-specialist"
 })
 ```
 

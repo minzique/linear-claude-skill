@@ -362,6 +362,32 @@ node scripts/linear-helpers.mjs update-status Done 123 124 125
 
 For detailed helper script usage, see **[troubleshooting.md](troubleshooting.md)**.
 
+### Parallel Agent Execution
+
+For bulk operations or background execution, use the `Linear-specialist` subagent:
+
+```javascript
+Task({
+  description: "Update Linear issues",
+  prompt: "Mark ENG-101, ENG-102, ENG-103 as Done",
+  subagent_type: "Linear-specialist"
+})
+```
+
+**When to use `Linear-specialist` (parallel):**
+- Bulk status updates (3+ issues)
+- Project status changes
+- Creating multiple issues
+- Sync operations after code changes
+
+**When to use direct execution:**
+- Single issue queries
+- Viewing issue details
+- Quick status checks
+- Operations needing immediate results
+
+See **[sync.md](sync.md)** for parallel execution patterns.
+
 ## Critical Requirements
 
 ### Issues → Projects → Initiatives

@@ -40,7 +40,7 @@ Task({
     Use GraphQL mutations (MCP times out on bulk ops).
     Report success/failure counts.
   `,
-  subagent_type: "general-purpose"
+  subagent_type: "Linear-specialist"
 })
 ```
 
@@ -151,17 +151,17 @@ Spawn multiple sync agents for independent issue batches:
   Task({
     description: "Sync ENG-432-437",
     prompt: "Update ENG-432,433,434,435,436,437 to Done via GraphQL",
-    subagent_type: "general-purpose"
+    subagent_type: "Linear-specialist"
   }),
   Task({
     description: "Sync ENG-441-448",
     prompt: "Update ENG-441,442,443,444,446,447,448 to Done via GraphQL",
-    subagent_type: "general-purpose"
+    subagent_type: "Linear-specialist"
   }),
   Task({
     description: "Update project status",
     prompt: "Update project 'Current Phase' to completed state",
-    subagent_type: "general-purpose"
+    subagent_type: "Linear-specialist"
   })
 ]
 ```
