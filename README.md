@@ -29,7 +29,7 @@ cd ~/.claude/skills/linear && npm install
 ### 2. Run Setup Check
 
 ```bash
-npx tsx ~/.claude/skills/linear/scripts/setup.ts
+bun run ~/.claude/skills/linear/scripts/setup.ts
 ```
 
 This checks your configuration and tells you exactly what's missing.
@@ -50,7 +50,7 @@ source ~/.zshrc
 ### 4. Verify It Works
 
 ```bash
-npx tsx ~/.claude/skills/linear/scripts/linear-ops.ts whoami
+bun run ~/.claude/skills/linear/scripts/linear-ops.ts whoami
 ```
 
 You should see your name and organization.
@@ -59,22 +59,22 @@ You should see your name and organization.
 
 ```bash
 # Create an initiative
-npx tsx scripts/linear-ops.ts create-initiative "My Project"
+bun run scripts/linear-ops.ts create-initiative "My Project"
 
 # Create a project
-npx tsx scripts/linear-ops.ts create-project "Phase 1" "My Project"
+bun run scripts/linear-ops.ts create-project "Phase 1" "My Project"
 
 # Create a sub-issue under a parent
-npx tsx scripts/linear-ops.ts create-sub-issue ENG-100 "Add tests" "Unit tests for feature"
+bun run scripts/linear-ops.ts create-sub-issue ENG-100 "Add tests" "Unit tests for feature"
 
 # Set parent-child relationships for existing issues
-npx tsx scripts/linear-ops.ts set-parent ENG-100 ENG-101 ENG-102
+bun run scripts/linear-ops.ts set-parent ENG-100 ENG-101 ENG-102
 
 # Update issue status
 node scripts/linear-helpers.mjs update-status Done 123 124
 
 # See all commands
-npx tsx scripts/linear-ops.ts help
+bun run scripts/linear-ops.ts help
 ```
 
 ---
@@ -202,13 +202,13 @@ Organize issues into parent-child hierarchies for better tracking:
 ```bash
 # Create a sub-issue under a parent issue
 # Inherits team and project from parent automatically
-npx tsx scripts/linear-ops.ts create-sub-issue <parent> <title> [description] [--priority 1-4] [--labels label1,label2]
+bun run scripts/linear-ops.ts create-sub-issue <parent> <title> [description] [--priority 1-4] [--labels label1,label2]
 
 # Set existing issues as children of a parent
-npx tsx scripts/linear-ops.ts set-parent <parent> <child1> <child2> ...
+bun run scripts/linear-ops.ts set-parent <parent> <child1> <child2> ...
 
 # List all sub-issues of a parent
-npx tsx scripts/linear-ops.ts list-sub-issues <parent>
+bun run scripts/linear-ops.ts list-sub-issues <parent>
 ```
 
 **When to use sub-issues:**
@@ -222,16 +222,16 @@ A standardized label system for consistent issue categorization across projects:
 
 ```bash
 # Show full taxonomy (25 labels across 3 categories)
-npx tsx scripts/linear-ops.ts labels taxonomy
+bun run scripts/linear-ops.ts labels taxonomy
 
 # Validate label combinations
-npx tsx scripts/linear-ops.ts labels validate "feature,security,breaking-change"
+bun run scripts/linear-ops.ts labels validate "feature,security,breaking-change"
 
 # Suggest labels based on issue title
-npx tsx scripts/linear-ops.ts labels suggest "Fix XSS vulnerability in login form"
+bun run scripts/linear-ops.ts labels suggest "Fix XSS vulnerability in login form"
 
 # Show agent recommendations for labels
-npx tsx scripts/linear-ops.ts labels agents "security,performance"
+bun run scripts/linear-ops.ts labels agents "security,performance"
 ```
 
 **Label Categories:**
@@ -275,7 +275,7 @@ Post status updates to a project's Updates tab:
 
 ```bash
 # Using SDK script (recommended)
-LINEAR_API_KEY=lin_api_xxx npx tsx scripts/create-project-update.ts "Project Name" "## Update\n\nBody" onTrack
+LINEAR_API_KEY=lin_api_xxx bun run scripts/create-project-update.ts "Project Name" "## Update\n\nBody" onTrack
 ```
 
 Health options: `onTrack`, `atRisk`, `offTrack`

@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env bun
 
 /**
  * Phase Completion Workflow
@@ -11,10 +11,10 @@
  * 5. Optionally archives the project
  *
  * Usage:
- *   LINEAR_API_KEY=lin_api_xxx npx tsx phase-complete.ts "Phase 1: Foundation"
- *   LINEAR_API_KEY=lin_api_xxx npx tsx phase-complete.ts "Phase 1" --archive
- *   LINEAR_API_KEY=lin_api_xxx npx tsx phase-complete.ts "Phase 1" --force
- *   LINEAR_API_KEY=lin_api_xxx npx tsx phase-complete.ts "Phase 1" --dry-run
+ *   LINEAR_API_KEY=lin_api_xxx bun run phase-complete.ts "Phase 1: Foundation"
+ *   LINEAR_API_KEY=lin_api_xxx bun run phase-complete.ts "Phase 1" --archive
+ *   LINEAR_API_KEY=lin_api_xxx bun run phase-complete.ts "Phase 1" --force
+ *   LINEAR_API_KEY=lin_api_xxx bun run phase-complete.ts "Phase 1" --dry-run
  */
 
 import { LinearClient } from '@linear/sdk';
@@ -84,7 +84,7 @@ function printUsage(): void {
 Phase Completion Workflow - Automate project/phase completion
 
 Usage:
-  LINEAR_API_KEY=xxx npx tsx phase-complete.ts "<project-name>" [options]
+  LINEAR_API_KEY=xxx bun run phase-complete.ts "<project-name>" [options]
 
 Options:
   --archive    Archive the project after completion
@@ -93,16 +93,16 @@ Options:
 
 Examples:
   # Complete a phase
-  npx tsx phase-complete.ts "Phase 1: Foundation"
+  bun run phase-complete.ts "Phase 1: Foundation"
 
   # Complete and archive
-  npx tsx phase-complete.ts "Phase 1" --archive
+  bun run phase-complete.ts "Phase 1" --archive
 
   # Force complete with incomplete issues
-  npx tsx phase-complete.ts "Phase 1" --force
+  bun run phase-complete.ts "Phase 1" --force
 
   # Preview what would happen
-  npx tsx phase-complete.ts "Phase 1" --dry-run
+  bun run phase-complete.ts "Phase 1" --dry-run
 `);
 }
 

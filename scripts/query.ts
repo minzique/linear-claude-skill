@@ -1,11 +1,11 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env bun
 
 /**
  * Execute ad-hoc GraphQL queries against the Linear API
  *
  * Usage:
- *   LINEAR_API_KEY=lin_api_xxx npx tsx query.ts "query { viewer { id name } }"
- *   LINEAR_API_KEY=lin_api_xxx npx tsx query.ts "query { viewer { id name } }" '{"var": "value"}'
+ *   LINEAR_API_KEY=lin_api_xxx bun run query.ts "query { viewer { id name } }"
+ *   LINEAR_API_KEY=lin_api_xxx bun run query.ts "query { viewer { id name } }" '{"var": "value"}'
  */
 
 import { LinearClient } from '@linear/sdk';
@@ -44,9 +44,9 @@ async function main() {
     console.error('     # Option C: Add to Claude Code environment');
     console.error('     echo \'LINEAR_API_KEY=lin_api_...\' >> ~/.claude/.env\n');
     console.error('Or run the full setup check:');
-    console.error('  npx tsx setup.ts\n');
+    console.error('  bun run setup.ts\n');
     console.error('Usage once configured:');
-    console.error('  npx tsx query.ts "query { viewer { id name } }"\n');
+    console.error('  bun run query.ts "query { viewer { id name } }"\n');
     process.exit(1);
   }
 
@@ -64,8 +64,8 @@ async function main() {
     console.error('Error: Query argument is required');
     console.error('');
     console.error('Usage:');
-    console.error('  LINEAR_API_KEY=lin_api_xxx npx tsx query.ts "query { viewer { id name } }"');
-    console.error('  LINEAR_API_KEY=lin_api_xxx npx tsx query.ts "query($id: String!) { issue(id: $id) { title } }" \'{"id": "ISSUE_ID"}\'');
+    console.error('  LINEAR_API_KEY=lin_api_xxx bun run query.ts "query { viewer { id name } }"');
+    console.error('  LINEAR_API_KEY=lin_api_xxx bun run query.ts "query($id: String!) { issue(id: $id) { title } }" \'{"id": "ISSUE_ID"}\'');
     process.exit(1);
   }
 

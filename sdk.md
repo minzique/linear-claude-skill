@@ -19,7 +19,7 @@ For complex Linear operations involving loops, mapping, or conditional logic, wr
 - Better error handling than raw GraphQL
 - Easier debugging
 
-Run scripts with: `npx tsx script.ts`
+Run scripts with: `bun run script.ts`
 
 ## Basic Setup
 
@@ -238,10 +238,10 @@ main().catch(error => {
 
 ```bash
 # Direct execution
-npx tsx automation.ts
+bun run automation.ts
 
 # With environment variable
-LINEAR_API_KEY=lin_api_xxx npx tsx automation.ts
+LINEAR_API_KEY=lin_api_xxx bun run automation.ts
 
 # Make executable (requires shebang)
 chmod +x automation.ts

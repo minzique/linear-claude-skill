@@ -1,11 +1,11 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env bun
 /**
  * Linear High-Level Operations
  *
  * Simple commands for common Linear operations without needing to understand the API.
  *
  * Usage:
- *   npx tsx linear-ops.ts <command> [args]
+ *   bun run linear-ops.ts <command> [args]
  *
  * Commands:
  *   create-issue <project> <title> [desc]    Create an issue in a project
@@ -46,7 +46,7 @@ if (!API_KEY) {
   console.error('  2. Create a new API key');
   console.error('  3. Run: export LINEAR_API_KEY="lin_api_..."');
   console.error('\nOr run setup to check all requirements:');
-  console.error('  npx tsx setup.ts\n');
+  console.error('  bun run setup.ts\n');
   process.exit(1);
 }
 
@@ -722,7 +722,7 @@ const commands: Record<string, (...args: string[]) => Promise<void>> = {
     const { fileURLToPath } = await import('url');
 
     const __dirname = dirname(fileURLToPath(import.meta.url));
-    execSync(`npx tsx ${__dirname}/setup.ts`, { stdio: 'inherit' });
+    execSync(`bun run ${__dirname}/setup.ts`, { stdio: 'inherit' });
   },
 
   async 'whoami'() {
@@ -1245,7 +1245,7 @@ const commands: Record<string, (...args: string[]) => Promise<void>> = {
 Linear High-Level Operations
 
 Usage:
-  npx tsx linear-ops.ts <command> [arguments]
+  bun run linear-ops.ts <command> [arguments]
 
 Commands:
   create-issue <project-name> <title> [description] [--priority 1-4] [--labels label1,label2]
@@ -1329,25 +1329,25 @@ Commands:
     Show this help message
 
 Examples:
-  npx tsx linear-ops.ts create-issue "My Project" "Fix login bug" "Users cannot log in" --priority 2
-  npx tsx linear-ops.ts create-sub-issue ENG-100 "Add unit tests" "Unit tests for new feature" --priority 2
-  npx tsx linear-ops.ts set-parent ENG-100 ENG-101 ENG-102
-  npx tsx linear-ops.ts list-sub-issues ENG-100
-  npx tsx linear-ops.ts create-initiative "Q1 2025 Goals" "Key initiatives for Q1"
-  npx tsx linear-ops.ts create-project "Phase 1: Foundation" "Q1 2025 Goals"
-  npx tsx linear-ops.ts create-project-update "My Project" "## Summary\\n\\nWork completed"
-  npx tsx linear-ops.ts create-initiative-update "My Initiative" "## Phase Complete"
-  npx tsx linear-ops.ts add-link "Phase 6A" "https://github.com/org/repo/docs/plan.md" "Implementation Plan"
-  npx tsx linear-ops.ts status Done 123 124 125
-  npx tsx linear-ops.ts done ENG-123 ENG-124
-  npx tsx linear-ops.ts wip ENG-125
-  npx tsx linear-ops.ts list-initiatives
-  npx tsx linear-ops.ts labels taxonomy
-  npx tsx linear-ops.ts labels validate "feature,security,breaking-change"
-  npx tsx linear-ops.ts labels suggest "Fix XSS vulnerability in login form"
-  npx tsx linear-ops.ts labels agents "security,performance"
-  npx tsx linear-ops.ts labels set SMI-1770 mcp,DX,feature
-  npx tsx linear-ops.ts labels set ENG-123 bug,security --replace
+  bun run linear-ops.ts create-issue "My Project" "Fix login bug" "Users cannot log in" --priority 2
+  bun run linear-ops.ts create-sub-issue ENG-100 "Add unit tests" "Unit tests for new feature" --priority 2
+  bun run linear-ops.ts set-parent ENG-100 ENG-101 ENG-102
+  bun run linear-ops.ts list-sub-issues ENG-100
+  bun run linear-ops.ts create-initiative "Q1 2025 Goals" "Key initiatives for Q1"
+  bun run linear-ops.ts create-project "Phase 1: Foundation" "Q1 2025 Goals"
+  bun run linear-ops.ts create-project-update "My Project" "## Summary\\n\\nWork completed"
+  bun run linear-ops.ts create-initiative-update "My Initiative" "## Phase Complete"
+  bun run linear-ops.ts add-link "Phase 6A" "https://github.com/org/repo/docs/plan.md" "Implementation Plan"
+  bun run linear-ops.ts status Done 123 124 125
+  bun run linear-ops.ts done ENG-123 ENG-124
+  bun run linear-ops.ts wip ENG-125
+  bun run linear-ops.ts list-initiatives
+  bun run linear-ops.ts labels taxonomy
+  bun run linear-ops.ts labels validate "feature,security,breaking-change"
+  bun run linear-ops.ts labels suggest "Fix XSS vulnerability in login form"
+  bun run linear-ops.ts labels agents "security,performance"
+  bun run linear-ops.ts labels set SMI-1770 mcp,DX,feature
+  bun run linear-ops.ts labels set ENG-123 bug,security --replace
 `);
   }
 };

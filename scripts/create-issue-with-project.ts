@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env bun
 
 /**
  * Create a Linear issue with project assignment
@@ -6,7 +6,7 @@
  * Looks up project by name and creates issue with projectId.
  *
  * Usage:
- *   LINEAR_API_KEY=xxx npx tsx scripts/create-issue-with-project.ts \
+ *   LINEAR_API_KEY=xxx bun run scripts/create-issue-with-project.ts \
  *     --team "ENG" \
  *     --project "Phase 6A" \
  *     --title "Implement feature X" \
@@ -84,7 +84,7 @@ function parseArgs(): Args {
     console.error('Error: --team, --project, and --title are required');
     console.error('');
     console.error('Usage:');
-    console.error('  LINEAR_API_KEY=xxx npx tsx scripts/create-issue-with-project.ts \\');
+    console.error('  LINEAR_API_KEY=xxx bun run scripts/create-issue-with-project.ts \\');
     console.error('    --team "ENG" \\');
     console.error('    --project "Phase 6A" \\');
     console.error('    --title "Implement feature X"');
@@ -207,7 +207,7 @@ async function main() {
     console.error(`Error: Project "${args.project}" not found`);
     console.error('');
     console.error('Available projects can be listed with:');
-    console.error('  LINEAR_API_KEY=xxx npx tsx scripts/query.ts "query { projects { nodes { id name } } }"');
+    console.error('  LINEAR_API_KEY=xxx bun run scripts/query.ts "query { projects { nodes { id name } } }"');
     process.exit(EXIT_CODES.RESOURCE_NOT_FOUND);
   }
   console.log(`  Found: ${project.name}`);

@@ -34,11 +34,11 @@
     "LICENSE"
   ],
   "scripts": {
-    "postinstall": "npx tsx scripts/setup.ts --silent 2>/dev/null || true",
-    "setup": "npx tsx scripts/setup.ts",
-    "ops": "npx tsx scripts/linear-ops.ts",
-    "query": "npx tsx scripts/query.ts",
-    "test-connection": "npx tsx scripts/query.ts \"query { viewer { name } }\"",
+    "postinstall": "bun run scripts/setup.ts --silent 2>/dev/null || true",
+    "setup": "bun run scripts/setup.ts",
+    "ops": "bun run scripts/linear-ops.ts",
+    "query": "bun run scripts/query.ts",
+    "test-connection": "bun run scripts/query.ts \"query { viewer { name } }\"",
     "typecheck": "tsc --noEmit",
     "lint": "eslint scripts/",
     "lint:fix": "eslint scripts/ --fix"

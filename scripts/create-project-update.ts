@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env bun
 
 /**
  * Create a project update (status report) in Linear
@@ -6,7 +6,7 @@
  * Looks up project by name, posts markdown content, and returns the update URL.
  *
  * Usage:
- *   LINEAR_API_KEY=lin_api_xxx npx tsx create-project-update.ts "Project Name" "## Update\n\nBody content" [health]
+ *   LINEAR_API_KEY=lin_api_xxx bun run create-project-update.ts "Project Name" "## Update\n\nBody content" [health]
  *
  * Arguments:
  *   projectName - Name of the project (case-insensitive partial match)
@@ -14,8 +14,8 @@
  *   health      - Optional: onTrack (default), atRisk, offTrack
  *
  * Examples:
- *   npx tsx create-project-update.ts "Phase 1" "## Progress\n\n- Feature A complete"
- *   npx tsx create-project-update.ts "Phase 1" "## At Risk\n\nBlocked on API" atRisk
+ *   bun run create-project-update.ts "Phase 1" "## Progress\n\n- Feature A complete"
+ *   bun run create-project-update.ts "Phase 1" "## At Risk\n\nBlocked on API" atRisk
  */
 
 import { LinearClient } from '@linear/sdk';
@@ -30,7 +30,7 @@ import {
 
 function printUsage(): void {
   console.error('Usage:');
-  console.error('  LINEAR_API_KEY=lin_api_xxx npx tsx create-project-update.ts "Project Name" "Body content" [health]');
+  console.error('  LINEAR_API_KEY=lin_api_xxx bun run create-project-update.ts "Project Name" "Body content" [health]');
   console.error('');
   console.error('Arguments:');
   console.error('  projectName - Name of the project (case-insensitive partial match)');
@@ -38,8 +38,8 @@ function printUsage(): void {
   console.error('  health      - Optional: onTrack (default), atRisk, offTrack');
   console.error('');
   console.error('Examples:');
-  console.error('  npx tsx create-project-update.ts "Phase 1" "## Progress\\n\\n- Feature complete"');
-  console.error('  npx tsx create-project-update.ts "Phase 1" "## Blocked\\n\\nAPI issues" atRisk');
+  console.error('  bun run create-project-update.ts "Phase 1" "## Progress\\n\\n- Feature complete"');
+  console.error('  bun run create-project-update.ts "Phase 1" "## Blocked\\n\\nAPI issues" atRisk');
 }
 
 interface ProjectUpdateResult {

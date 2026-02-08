@@ -206,26 +206,26 @@ Linear supports hierarchical issue organization through parent-child relationshi
 ```bash
 # Create a sub-issue (child) under a parent issue
 # Inherits team and project from parent automatically
-npx tsx scripts/linear-ops.ts create-sub-issue <parent-issue> <title> [description] [--priority 1-4] [--labels label1,label2]
+bun run scripts/linear-ops.ts create-sub-issue <parent-issue> <title> [description] [--priority 1-4] [--labels label1,label2]
 
 # Set existing issues as children of a parent
-npx tsx scripts/linear-ops.ts set-parent <parent-issue> <child-issues...>
+bun run scripts/linear-ops.ts set-parent <parent-issue> <child-issues...>
 
 # List all sub-issues of a parent
-npx tsx scripts/linear-ops.ts list-sub-issues <parent-issue>
+bun run scripts/linear-ops.ts list-sub-issues <parent-issue>
 ```
 
 ### Examples
 
 ```bash
 # Create a sub-issue for unit tests under a parent feature issue
-npx tsx scripts/linear-ops.ts create-sub-issue ENG-100 "Add unit tests" "Unit tests for new feature" --priority 2 --labels testing
+bun run scripts/linear-ops.ts create-sub-issue ENG-100 "Add unit tests" "Unit tests for new feature" --priority 2 --labels testing
 
 # Link existing issues as children of a parent
-npx tsx scripts/linear-ops.ts set-parent ENG-100 ENG-101 ENG-102
+bun run scripts/linear-ops.ts set-parent ENG-100 ENG-101 ENG-102
 
 # List all sub-issues of a parent
-npx tsx scripts/linear-ops.ts list-sub-issues ENG-100
+bun run scripts/linear-ops.ts list-sub-issues ENG-100
 ```
 
 ### Notes
@@ -256,7 +256,7 @@ mutation {
 **Example using query.ts:**
 
 ```bash
-npx tsx ~/.claude/skills/linear/scripts/query.ts 'mutation {
+bun run ~/.claude/skills/linear/scripts/query.ts 'mutation {
   initiativeToProjectCreate(input: {
     initiativeId: "<initiative-uuid>",
     projectId: "<project-uuid>"
@@ -287,7 +287,7 @@ linear projects list | grep -i "phase N"
 linear projects create --name "Phase N: Name" --description "Short summary"
 
 # 2. Link to initiative (use initiativeToProjectCreate mutation - see above)
-npx tsx scripts/query.ts 'mutation { initiativeToProjectCreate(input: { initiativeId: "<uuid>", projectId: "<uuid>" }) { success } }'
+bun run scripts/query.ts 'mutation { initiativeToProjectCreate(input: { initiativeId: "<uuid>", projectId: "<uuid>" }) { success } }'
 
 # 3. Set content (main UI panel)
 # Use GraphQL to set full markdown content

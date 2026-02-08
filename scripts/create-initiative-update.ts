@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env bun
 
 /**
  * Create an initiative update (status report) in Linear
@@ -6,7 +6,7 @@
  * Looks up initiative by name, posts markdown content, and returns the update URL.
  *
  * Usage:
- *   LINEAR_API_KEY=lin_api_xxx npx tsx create-initiative-update.ts "Initiative Name" "## Update\n\nBody content" [health]
+ *   LINEAR_API_KEY=lin_api_xxx bun run create-initiative-update.ts "Initiative Name" "## Update\n\nBody content" [health]
  *
  * Arguments:
  *   initiativeName - Name of the initiative (case-insensitive partial match)
@@ -14,8 +14,8 @@
  *   health         - Optional: onTrack (default), atRisk, offTrack
  *
  * Examples:
- *   npx tsx create-initiative-update.ts "Q1 Goals" "## Progress\n\n- 3/5 projects complete"
- *   npx tsx create-initiative-update.ts "Product Launch" "## At Risk\n\nBlocked on dependency" atRisk
+ *   bun run create-initiative-update.ts "Q1 Goals" "## Progress\n\n- 3/5 projects complete"
+ *   bun run create-initiative-update.ts "Product Launch" "## At Risk\n\nBlocked on dependency" atRisk
  */
 
 import { LinearClient } from '@linear/sdk';
@@ -30,7 +30,7 @@ import {
 
 function printUsage(): void {
   console.error('Usage:');
-  console.error('  LINEAR_API_KEY=lin_api_xxx npx tsx create-initiative-update.ts "Initiative Name" "Body content" [health]');
+  console.error('  LINEAR_API_KEY=lin_api_xxx bun run create-initiative-update.ts "Initiative Name" "Body content" [health]');
   console.error('');
   console.error('Arguments:');
   console.error('  initiativeName - Name of the initiative (case-insensitive partial match)');
@@ -38,8 +38,8 @@ function printUsage(): void {
   console.error('  health         - Optional: onTrack (default), atRisk, offTrack');
   console.error('');
   console.error('Examples:');
-  console.error('  npx tsx create-initiative-update.ts "Q1 Goals" "## Progress\\n\\n- 3/5 projects done"');
-  console.error('  npx tsx create-initiative-update.ts "Product Launch" "## Blocked\\n\\nDependency issue" atRisk');
+  console.error('  bun run create-initiative-update.ts "Q1 Goals" "## Progress\\n\\n- 3/5 projects done"');
+  console.error('  bun run create-initiative-update.ts "Product Launch" "## Blocked\\n\\nDependency issue" atRisk');
 }
 
 interface InitiativeUpdateResult {
@@ -127,7 +127,7 @@ async function main(): Promise<void> {
     console.error(`Error: Initiative not found matching "${initiativeName}"`);
     console.error('');
     console.error('Tip: List all initiatives with:');
-    console.error('  LINEAR_API_KEY=xxx npx tsx scripts/query.ts "query { initiatives { nodes { id name } } }"');
+    console.error('  LINEAR_API_KEY=xxx bun run scripts/query.ts "query { initiatives { nodes { id name } } }"');
     process.exit(EXIT_CODES.RESOURCE_NOT_FOUND);
   }
 

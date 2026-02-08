@@ -135,7 +135,7 @@ node scripts/linear-helpers.mjs update-status Done 123 124 125
 For long-running operations, prefer the bulk sync script:
 
 ```bash
-npx tsx scripts/sync.ts --issues PROJ-101,PROJ-102,PROJ-103 --state Done
+bun run scripts/sync.ts --issues PROJ-101,PROJ-102,PROJ-103 --state Done
 ```
 
 ### API Key Not Set
@@ -159,7 +159,7 @@ export LINEAR_API_KEY="lin_api_your_key_here"
 ### Test Connection
 
 ```bash
-npx tsx ~/.claude/skills/linear/scripts/query.ts "query { viewer { name } }"
+bun run ~/.claude/skills/linear/scripts/query.ts "query { viewer { name } }"
 ```
 
 ### Check MCP Configuration
@@ -169,7 +169,7 @@ Ensure `mcp.linear.app` (not a community server) is configured in your MCP setti
 ### View Available States
 
 ```bash
-npx tsx scripts/query.ts 'query { workflowStates(first: 50) { nodes { id name type } } }'
+bun run scripts/query.ts 'query { workflowStates(first: 50) { nodes { id name type } } }'
 ```
 
 ---

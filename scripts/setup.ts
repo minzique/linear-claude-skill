@@ -1,12 +1,12 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env bun
 /**
  * Linear Skill Setup Check
  *
  * Run this script to verify your Linear skill configuration:
- *   npx tsx setup.ts
+ *   bun run setup.ts
  *
  * Or with silent mode (for postinstall):
- *   npx tsx setup.ts --silent
+ *   bun run setup.ts --silent
  */
 
 import { existsSync, readFileSync } from 'fs';
@@ -221,9 +221,9 @@ async function runSetupCheck(): Promise<SetupResult> {
     log('  STATUS: Ready to use!');
     log('========================================\n');
     log('Quick commands:');
-    log('  - Create initiative: npx tsx scripts/linear-ops.ts create-initiative "Name"');
+    log('  - Create initiative: bun run scripts/linear-ops.ts create-initiative "Name"');
     log('  - Update status:     node scripts/linear-helpers.mjs update-status Done 123');
-    log('  - Query API:         npx tsx scripts/query.ts "query { viewer { name } }"');
+    log('  - Query API:         bun run scripts/query.ts "query { viewer { name } }"');
     log('');
     return { ready: true, issues: [], suggestions: [] };
   } else {
