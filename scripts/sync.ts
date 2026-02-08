@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+import './lib/env-loader';
 
 /**
  * Bulk sync Linear issues to a target state

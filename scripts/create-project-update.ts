@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+import './lib/env-loader';
 
 /**
  * Create a project update (status report) in Linear

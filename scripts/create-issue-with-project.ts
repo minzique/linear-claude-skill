@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+import './lib/env-loader';
 
 /**
  * Create a Linear issue with project assignment

@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+import './lib/env-loader';
 /**
  * Linear Skill Setup Check
  *

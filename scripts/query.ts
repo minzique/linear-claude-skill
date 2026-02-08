@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+import './lib/env-loader';
 
 /**
  * Execute ad-hoc GraphQL queries against the Linear API
